@@ -1,0 +1,1216 @@
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { 
+  Key, Shield, List, MessageSquare, Mail, 
+  Download, Plus, Edit2, Trash2, CheckCircle, 
+  XCircle, Home, LogOut, Package, RefreshCw,
+  FileText, Printer, PlusCircle, Trash 
+} from 'lucide-react';
+import api from '../api/axios';
+import { useToast } from '../context/ToastContext';
+
+export default function Admin() {
+  const [secretKey, setSecretKey] = useState(localStorage.getItem('attars_admin_key') || 'attars-admin-2026');
+  const [keyInput, setKeyInput] = useState('attars-admin-2026');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [activeTab, setActiveTab] = useState('products');
+  const { showToast } = useToast();
+
+  // Data States
+  const [products, setProducts] = useState([]);
+  const [testimonials, setTestimonials] = useState([]);
+  const [subscribers, setSubscribers] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  // Billing States
+  const [billingInvoices, setBillingInvoices] = useState(JSON.parse(localStorage.getItem('attars_billing_invoices') || '[]'));
+  const [invoiceCustomer, setInvoiceCustomer] = useState({ name: '', contact: '', address: '', date: new Date().toISOString().split('T')[0], notes: '' });
+  const [invoiceItems, setInvoiceItems] = useState([]);
+  const [selectedProductId, setSelectedProductId] = useState('');
+  const [selectedProductQty, setSelectedProductQty] = useState(1);
+  const [invoiceDiscount, setInvoiceDiscount] = useState(0);
+  const [invoiceId, setInvoiceId] = useState(`INV-2026-${Math.floor(1000 + Math.random() * 9000)}`);
+
+  // Form States (for creating/editing products)
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [showProductForm, setShowProductForm] = useState(false);
+  const [productForm, setProductForm] = useState({
+    name: '',
+    nameHindi: '',
+    subtitle: '',
+    description: '',
+    price: 0,
+    originalPrice: '',
+    category: 'floral',
+    tags: '',
+    volume: '12ml',
+    image: '',
+    badge: '',
+    colorSwatch: '#8B6914',
+    inStock: true,
+    stockCount: 50,
+    featured: false,
+    origin: ''
+  });
+
+  // Verify Key on Mount or Entry
+  useEffect(() => {
+    if (secretKey) {
+      verifyKey(secretKey);
+    }
+  }, [secretKey]);
+
+  const verifyKey = async (key) => {
+    setLoading(true);
+    try {
+      // Test key by requesting admin testimonials list
+      await api.get('/testimonials/admin', {
+        headers: { 'x-admin-key': key }
+      });
+      setIsAuthenticated(true);
+      localStorage.setItem('attars_admin_key', key);
+      showToast('Authenticated as Administrator', 'success');
+      loadAllData(key);
+    } catch (err) {
+      setIsAuthenticated(false);
+      localStorage.removeItem('attars_admin_key');
+      setSecretKey('');
+      showToast('Invalid Secret Key', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLoginSubmit = (e) => {
+    e.preventDefault();
+    if (!keyInput.trim()) return;
+    setSecretKey(keyInput.trim());
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('attars_admin_key');
+    setIsAuthenticated(false);
+    setSecretKey('');
+    setKeyInput('');
+    showToast('Logged out of Admin Panel');
+  };
+
+  const loadAllData = async (key = secretKey) => {
+    setLoading(true);
+    try {
+      const headers = { headers: { 'x-admin-key': key } };
+      
+      // Fetch Products
+      const prodRes = await api.get('/products');
+      if (prodRes.success) {
+        const pList = prodRes.data || [];
+        setProducts(pList);
+        if (pList.length > 0) setSelectedProductId(pList[0]._id);
+      }
+
+      // Fetch Reviews (Admin route returns all reviews)
+      const testRes = await api.get('/testimonials/admin', headers);
+      if (testRes.success) setTestimonials(testRes.data || []);
+
+      // Fetch Subscribers
+      const subRes = await api.get('/newsletter/subscribers', headers);
+      if (subRes.success) setSubscribers(subRes.data || []);
+
+    } catch (err) {
+      showToast(err.message || 'Error fetching records', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // CSV Downloader
+  const handleExportCSV = (type) => {
+    if (type === 'subscribers') {
+      const headers = ['ID', 'Email', 'Subscribed At', 'Active'];
+      const mapFn = (row) => [row._id, row.email, row.subscribedAt, row.active];
+      downloadCSV('attars_subscribers.csv', headers, subscribers, mapFn);
+      showToast('Subscribers list exported as CSV');
+    } else if (type === 'products') {
+      const headers = ['ID', 'Name', 'Subtitle', 'Price', 'Original Price', 'Category', 'Stock Count', 'In Stock', 'Rating', 'Origin'];
+      const mapFn = (row) => [row._id, row.name, row.subtitle, row.price, row.originalPrice, row.category, row.stockCount, row.inStock, row.rating, row.origin];
+      downloadCSV('attars_products.csv', headers, products, mapFn);
+      showToast('Products catalog exported as CSV');
+    } else if (type === 'reviews') {
+      const headers = ['ID', 'Name', 'Location', 'Rating', 'Product Name', 'Approved', 'Text'];
+      const mapFn = (row) => [row._id, row.name, row.location, row.rating, row.productName, row.approved, row.text];
+      downloadCSV('attars_reviews.csv', headers, testimonials, mapFn);
+      showToast('Reviews records exported as CSV');
+    }
+  };
+
+  const downloadCSV = (filename, headers, data, mapRowFn) => {
+    const csvContent = [
+      headers.join(','),
+      ...data.map(row => mapRowFn(row).map(val => `"${String(val ?? '').replace(/"/g, '""')}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Product CRUD Handlers
+  const openCreateForm = () => {
+    setEditingProduct(null);
+    setProductForm({
+      name: '',
+      nameHindi: '',
+      subtitle: '',
+      description: '',
+      price: '',
+      originalPrice: '',
+      category: 'floral',
+      tags: '',
+      volume: '12ml',
+      image: 'https://images.unsplash.com/photo-1594035910387-fbd1a485b12e?w=800&h=1000&fit=crop',
+      badge: '',
+      colorSwatch: '#8B6914',
+      inStock: true,
+      stockCount: 50,
+      featured: false,
+      origin: ''
+    });
+    setShowProductForm(true);
+  };
+
+  const openEditForm = (product) => {
+    setEditingProduct(product);
+    setProductForm({
+      name: product.name || '',
+      nameHindi: product.nameHindi || '',
+      subtitle: product.subtitle || '',
+      description: product.description || '',
+      price: product.price || '',
+      originalPrice: product.originalPrice || '',
+      category: product.category || 'floral',
+      tags: product.tags ? product.tags.join(', ') : '',
+      volume: product.volume || '12ml',
+      image: product.image || '',
+      badge: product.badge || '',
+      colorSwatch: product.colorSwatch || '#8B6914',
+      inStock: product.inStock !== false,
+      stockCount: product.stockCount ?? 50,
+      featured: product.featured === true,
+      origin: product.origin || ''
+    });
+    setShowProductForm(true);
+  };
+
+  const handleProductSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const payload = {
+        ...productForm,
+        price: Number(productForm.price),
+        originalPrice: productForm.originalPrice ? Number(productForm.originalPrice) : undefined,
+        tags: productForm.tags ? productForm.tags.split(',').map(t => t.trim()).filter(Boolean) : []
+      };
+
+      const headers = { headers: { 'x-admin-key': secretKey } };
+
+      if (editingProduct) {
+        // Edit API Call
+        await api.put(`/products/${editingProduct._id}`, payload, headers);
+        showToast('Product updated successfully');
+      } else {
+        // Create API Call
+        await api.post('/products', payload, headers);
+        showToast('Product created successfully');
+      }
+
+      setShowProductForm(false);
+      loadAllData();
+    } catch (err) {
+      showToast(err.message || 'Error saving product', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteProduct = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this product?')) return;
+    setLoading(true);
+    try {
+      await api.delete(`/products/${id}`, {
+        headers: { 'x-admin-key': secretKey }
+      });
+      showToast('Product deleted');
+      loadAllData();
+    } catch (err) {
+      showToast(err.message || 'Error deleting product', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Testimonial Approval Toggle
+  const handleToggleApproval = async (id, currentStatus) => {
+    setLoading(true);
+    try {
+      await api.put(`/testimonials/${id}`, { approved: !currentStatus }, {
+        headers: { 'x-admin-key': secretKey }
+      });
+      showToast(`Review ${!currentStatus ? 'Approved' : 'Moved to Pending'}`);
+      loadAllData();
+    } catch (err) {
+      showToast(err.message || 'Error updating review', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteReview = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this testimonial?')) return;
+    setLoading(true);
+    try {
+      await api.delete(`/testimonials/${id}`, {
+        headers: { 'x-admin-key': secretKey }
+      });
+      showToast('Review deleted');
+      loadAllData();
+    } catch (err) {
+      showToast(err.message || 'Error deleting review', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Subscriber Unsubscribe Handler
+  const handleDeleteSubscriber = async (id) => {
+    if (!window.confirm('Are you sure you want to unsubscribe this email?')) return;
+    setLoading(true);
+    try {
+      await api.delete(`/newsletter/subscribers/${id}`, {
+        headers: { 'x-admin-key': secretKey }
+      });
+      showToast('Subscriber removed');
+      loadAllData();
+    } catch (err) {
+      showToast(err.message || 'Error removing subscriber', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Billing and Invoice Generation Handlers
+  const handleAddItemToInvoice = () => {
+    if (!selectedProductId) {
+      showToast('Please select a product first', 'error');
+      return;
+    }
+    const prod = products.find(p => p._id === selectedProductId);
+    if (!prod) return;
+
+    // Check if item already exists in invoice items
+    const existsIdx = invoiceItems.findIndex(item => item._id === selectedProductId);
+    if (existsIdx > -1) {
+      const updated = [...invoiceItems];
+      updated[existsIdx].qty += Number(selectedProductQty);
+      setInvoiceItems(updated);
+    } else {
+      setInvoiceItems([...invoiceItems, {
+        _id: prod._id,
+        name: prod.name,
+        nameHindi: prod.nameHindi,
+        price: prod.price,
+        volume: prod.volume,
+        qty: Number(selectedProductQty)
+      }]);
+    }
+    showToast(`Added ${prod.name} (x${selectedProductQty}) to invoice`);
+  };
+
+  const handleRemoveItemFromInvoice = (id) => {
+    setInvoiceItems(invoiceItems.filter(item => item._id !== id));
+  };
+
+  const handleClearInvoice = () => {
+    setInvoiceItems([]);
+    setInvoiceCustomer({ name: '', contact: '', address: '', date: new Date().toISOString().split('T')[0], notes: '' });
+    setInvoiceDiscount(0);
+    setInvoiceId(`INV-2026-${Math.floor(1000 + Math.random() * 9000)}`);
+  };
+
+  const handleGenerateInvoice = () => {
+    if (!invoiceCustomer.name) {
+      showToast('Please enter customer name', 'error');
+      return;
+    }
+    if (invoiceItems.length === 0) {
+      showToast('Please add at least one product to the invoice', 'error');
+      return;
+    }
+
+    // Calculations
+    const subtotal = invoiceItems.reduce((sum, item) => sum + (item.price * item.qty), 0);
+    const discountVal = Number(invoiceDiscount) || 0;
+    const taxable = Math.max(0, subtotal - discountVal);
+    const cgst = taxable * 0.09;
+    const sgst = taxable * 0.09;
+    const grandTotal = taxable + cgst + sgst;
+
+    const newInvoice = {
+      invoiceId,
+      customer: { ...invoiceCustomer },
+      items: [...invoiceItems],
+      subtotal,
+      discount: discountVal,
+      cgst,
+      sgst,
+      grandTotal,
+      date: invoiceCustomer.date || new Date().toLocaleDateString()
+    };
+
+    const updatedInvoices = [newInvoice, ...billingInvoices];
+    setBillingInvoices(updatedInvoices);
+    localStorage.setItem('attars_billing_invoices', JSON.stringify(updatedInvoices));
+
+    showToast('Invoice generated successfully! Opening print dialog...', 'success');
+
+    // Trigger printing
+    setTimeout(() => {
+      window.print();
+    }, 100);
+  };
+
+  const handleDeleteInvoice = (id) => {
+    if (!window.confirm('Delete this invoice record from session history?')) return;
+    const updated = billingInvoices.filter(inv => inv.invoiceId !== id);
+    setBillingInvoices(updated);
+    localStorage.setItem('attars_billing_invoices', JSON.stringify(updated));
+    showToast('Invoice record deleted');
+  };
+
+  const handleLoadInvoiceToGenerator = (inv) => {
+    setInvoiceId(inv.invoiceId);
+    setInvoiceCustomer({
+      name: inv.customer.name,
+      contact: inv.customer.contact,
+      address: inv.customer.address,
+      date: inv.date,
+      notes: inv.customer.notes || ''
+    });
+    setInvoiceItems(inv.items);
+    setInvoiceDiscount(inv.discount);
+    showToast('Invoice details loaded into editor');
+  };
+
+  // Render Login Prompt if Unauthenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-surface-0 flex items-center justify-center px-5 relative overflow-hidden select-none">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(200,169,110,0.03),transparent_70%)]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-gold/[0.015] blur-[100px]" />
+        
+        <form onSubmit={handleLoginSubmit} className="relative z-10 w-full max-w-md p-8 rounded-2xl border border-border-subtle bg-surface-1/50 backdrop-blur-2xl shadow-2xl shadow-black/50 text-center">
+          <div className="w-16 h-16 rounded-full border border-gold/30 flex items-center justify-center bg-gold-subtle mx-auto mb-6">
+            <Shield className="w-6 h-6 text-gold" />
+          </div>
+          <h1 className="font-display text-2xl text-cream mb-2">Administrative Access</h1>
+          <p className="font-body text-xs text-cream-ghost mb-8 uppercase tracking-widest">Attars Perfumes Portal</p>
+          
+          <div className="relative mb-6">
+            <Key className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-cream-ghost" />
+            <input 
+              type="password"
+              value={keyInput}
+              onChange={(e) => setKeyInput(e.target.value)}
+              placeholder="Enter Administrator Key..."
+              required
+              className="w-full pl-12 pr-4 py-3.5 rounded-full bg-surface-2 border border-border-subtle text-cream placeholder-cream-ghost text-sm focus:outline-none focus:border-gold/40 transition-all duration-300"
+            />
+          </div>
+
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="w-full bg-gold-gradient hover:bg-gold-gradient-hover text-stone-950 py-3.5 rounded-full text-sm font-body font-semibold tracking-wide shadow-lg shadow-gold/15 transition-all duration-300 hover:translate-y-[-1px] disabled:opacity-50"
+          >
+            {loading ? 'Validating credentials...' : 'Authenticate'}
+          </button>
+          
+          <div className="mt-8 pt-6 border-t border-border-subtle">
+            <Link to="/" className="inline-flex items-center gap-2 text-xs text-cream-ghost hover:text-gold transition-colors">
+              <Home className="w-3.5 h-3.5" /> Back to Storefront
+            </Link>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
+  // Render Dashboard if Authenticated
+  return (
+    <div className="min-h-screen bg-surface-0 text-cream pb-16 relative">
+      {/* Header */}
+      <header className="border-b border-border-subtle bg-surface-1/30 backdrop-blur-md sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-full border border-gold/30 flex items-center justify-center bg-gold-subtle">
+              <span className="font-display text-gold text-sm font-semibold">अ</span>
+            </div>
+            <span className="font-display text-base font-semibold text-cream tracking-wide">ATTARS ADMIN</span>
+          </Link>
+
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => loadAllData()}
+              className="w-9 h-9 flex items-center justify-center rounded-full border border-border-subtle hover:bg-surface-2 transition-all duration-300"
+              title="Refresh Records"
+            >
+              <RefreshCw className={`w-4 h-4 text-cream-muted ${loading ? 'animate-spin' : ''}`} />
+            </button>
+            <button 
+              onClick={handleLogout}
+              className="px-4 py-2 rounded-full border border-red-500/20 text-red-400 hover:bg-red-950/20 text-xs font-body font-semibold tracking-wide flex items-center gap-2 transition-all"
+            >
+              <LogOut className="w-3.5 h-3.5" /> Logout
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-5 sm:px-8 pt-8">
+        {/* Dashboard Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
+          <div className="border border-border-subtle bg-surface-1/50 rounded-2xl p-6 flex items-center gap-5">
+            <div className="w-12 h-12 rounded-xl bg-gold-subtle border border-gold/15 flex items-center justify-center">
+              <Package className="w-5 h-5 text-gold" />
+            </div>
+            <div>
+              <div className="text-2xl font-display font-bold">{products.length}</div>
+              <div className="text-xs text-cream-ghost tracking-wide uppercase font-body mt-0.5">Total Products</div>
+            </div>
+          </div>
+          <div className="border border-border-subtle bg-surface-1/50 rounded-2xl p-6 flex items-center gap-5">
+            <div className="w-12 h-12 rounded-xl bg-gold-subtle border border-gold/15 flex items-center justify-center">
+              <MessageSquare className="w-5 h-5 text-gold" />
+            </div>
+            <div>
+              <div className="text-2xl font-display font-bold">{testimonials.length}</div>
+              <div className="text-xs text-cream-ghost tracking-wide uppercase font-body mt-0.5">Reviews ({testimonials.filter(t => !t.approved).length} Pending)</div>
+            </div>
+          </div>
+          <div className="border border-border-subtle bg-surface-1/50 rounded-2xl p-6 flex items-center gap-5">
+            <div className="w-12 h-12 rounded-xl bg-gold-subtle border border-gold/15 flex items-center justify-center">
+              <Mail className="w-5 h-5 text-gold" />
+            </div>
+            <div>
+              <div className="text-2xl font-display font-bold">{subscribers.length}</div>
+              <div className="text-xs text-cream-ghost tracking-wide uppercase font-body mt-0.5">Newsletter Subscriptions</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Action Panel Controls */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 border-b border-border-subtle pb-6 mb-8">
+          <div className="flex gap-2">
+            {[
+              { id: 'products', label: 'Products', icon: Package },
+              { id: 'testimonials', label: 'Reviews', icon: MessageSquare },
+              { id: 'subscribers', label: 'Subscribers', icon: Mail },
+              { id: 'billing', label: 'Invoice Generator', icon: FileText }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => { setActiveTab(tab.id); setShowProductForm(false); }}
+                className={`px-5 py-2.5 rounded-full text-xs font-body font-semibold tracking-wide flex items-center gap-2 border transition-all ${
+                  activeTab === tab.id
+                    ? 'border-gold/40 bg-gold-muted text-gold'
+                    : 'border-border-subtle text-cream-faint hover:bg-surface-2 hover:text-cream-muted'
+                }`}
+              >
+                <tab.icon className="w-3.5 h-3.5" />
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex gap-3">
+            {activeTab !== 'billing' && (
+              <button
+                onClick={() => handleExportCSV(activeTab)}
+                className="px-4 py-2.5 rounded-full border border-border-default bg-surface-1/30 hover:border-gold/30 hover:bg-gold-subtle text-xs font-body font-semibold tracking-wide flex items-center justify-center gap-2 transition-all"
+              >
+                <Download className="w-3.5 h-3.5" /> Download Records (CSV)
+              </button>
+            )}
+            {activeTab === 'products' && (
+              <button
+                onClick={openCreateForm}
+                className="bg-gold-gradient hover:bg-gold-gradient-hover text-stone-950 px-5 py-2.5 rounded-full text-xs font-body font-bold tracking-wide flex items-center justify-center gap-2 transition-all shadow-md shadow-gold/10"
+              >
+                <Plus className="w-4 h-4" /> Add Product
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Tab Contents */}
+        {loading && <div className="text-center py-20 text-cream-ghost font-body">Processing action...</div>}
+
+        {!loading && activeTab === 'products' && !showProductForm && (
+          <div className="border border-border-subtle bg-surface-1/30 rounded-2xl overflow-hidden shadow-xl">
+            <table className="w-full text-left border-collapse text-sm">
+              <thead>
+                <tr className="bg-surface-2/80 text-cream-ghost border-b border-border-subtle font-body text-xs uppercase tracking-wider">
+                  <th className="p-4 sm:p-5">Details</th>
+                  <th className="p-4 sm:p-5">Price</th>
+                  <th className="p-4 sm:p-5">Category</th>
+                  <th className="p-4 sm:p-5">Stock status</th>
+                  <th className="p-4 sm:p-5 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border-subtle font-body">
+                {products.map(p => (
+                  <tr key={p._id} className="hover:bg-surface-2/30 transition-colors">
+                    <td className="p-4 sm:p-5 flex items-center gap-4">
+                      <img src={p.image} alt={p.name} className="w-10 h-12 object-cover rounded-md border border-border-subtle" />
+                      <div>
+                        <div className="font-display font-semibold text-cream text-base">{p.name}</div>
+                        <div className="text-xs text-cream-ghost mt-0.5">{p.subtitle}</div>
+                      </div>
+                    </td>
+                    <td className="p-4 sm:p-5">
+                      <div className="text-gold font-semibold">₹{p.price.toLocaleString('en-IN')}</div>
+                      {p.originalPrice && <div className="text-xs text-cream-ghost line-through">₹{p.originalPrice.toLocaleString('en-IN')}</div>}
+                    </td>
+                    <td className="p-4 sm:p-5 capitalize">{p.category}</td>
+                    <td className="p-4 sm:p-5">
+                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold ${p.inStock ? 'bg-gold-subtle text-gold border border-gold/15' : 'bg-red-950/20 text-red-400 border border-red-900/30'}`}>
+                        {p.inStock ? `In Stock (${p.stockCount})` : 'Out of Stock'}
+                      </span>
+                    </td>
+                    <td className="p-4 sm:p-5 text-right">
+                      <div className="inline-flex gap-2">
+                        <button onClick={() => openEditForm(p)} className="p-2 rounded-full border border-border-default hover:border-gold/30 hover:bg-gold-subtle text-cream-muted hover:text-gold transition-all" title="Edit Product">
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button onClick={() => handleDeleteProduct(p._id)} className="p-2 rounded-full border border-border-default hover:border-red-900/40 hover:bg-red-950/20 text-cream-muted hover:text-red-400 transition-all" title="Delete Product">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Product Form Create / Edit */}
+        {!loading && activeTab === 'products' && showProductForm && (
+          <form onSubmit={handleProductSubmit} className="border border-border-subtle bg-surface-1/40 p-6 sm:p-8 rounded-2xl max-w-4xl mx-auto shadow-2xl">
+            <h2 className="font-display text-xl text-gold mb-6 pb-3 border-b border-border-subtle">
+              {editingProduct ? 'Modify Product Specifications' : 'Add New Fragrance Masterpiece'}
+            </h2>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+              <div>
+                <label className="block text-xs text-cream-muted uppercase tracking-wider mb-2 font-semibold">Fragrance Name (English) *</label>
+                <input 
+                  type="text" 
+                  value={productForm.name} 
+                  onChange={e => setProductForm({...productForm, name: e.target.value})} 
+                  required 
+                  className="w-full bg-surface-2 border border-border-subtle rounded-xl p-3 text-sm text-cream focus:outline-none focus:border-gold/40"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-cream-muted uppercase tracking-wider mb-2 font-semibold">Fragrance Name (Hindi swara)</label>
+                <input 
+                  type="text" 
+                  value={productForm.nameHindi} 
+                  onChange={e => setProductForm({...productForm, nameHindi: e.target.value})} 
+                  placeholder="e.g. मिट्टी अत्तर"
+                  className="w-full bg-surface-2 border border-border-subtle rounded-xl p-3 text-sm text-cream focus:outline-none focus:border-gold/40"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-cream-muted uppercase tracking-wider mb-2 font-semibold">Sub-Heading / Tagline *</label>
+                <input 
+                  type="text" 
+                  value={productForm.subtitle} 
+                  onChange={e => setProductForm({...productForm, subtitle: e.target.value})} 
+                  required 
+                  placeholder="e.g. The Scent of First Rain on Earth"
+                  className="w-full bg-surface-2 border border-border-subtle rounded-xl p-3 text-sm text-cream focus:outline-none focus:border-gold/40"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-cream-muted uppercase tracking-wider mb-2 font-semibold">Distillery Origin Location</label>
+                <input 
+                  type="text" 
+                  value={productForm.origin} 
+                  onChange={e => setProductForm({...productForm, origin: e.target.value})} 
+                  placeholder="e.g. Uttar Pradesh, India"
+                  className="w-full bg-surface-2 border border-border-subtle rounded-xl p-3 text-sm text-cream focus:outline-none focus:border-gold/40"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-cream-muted uppercase tracking-wider mb-2 font-semibold">Price (INR) *</label>
+                <input 
+                  type="number" 
+                  value={productForm.price} 
+                  onChange={e => setProductForm({...productForm, price: e.target.value})} 
+                  required 
+                  className="w-full bg-surface-2 border border-border-subtle rounded-xl p-3 text-sm text-cream focus:outline-none focus:border-gold/40"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-cream-muted uppercase tracking-wider mb-2 font-semibold">Original/Striking Price (INR - optional)</label>
+                <input 
+                  type="number" 
+                  value={productForm.originalPrice} 
+                  onChange={e => setProductForm({...productForm, originalPrice: e.target.value})} 
+                  className="w-full bg-surface-2 border border-border-subtle rounded-xl p-3 text-sm text-cream focus:outline-none focus:border-gold/40"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-cream-muted uppercase tracking-wider mb-2 font-semibold">Category Classification *</label>
+                <select 
+                  value={productForm.category} 
+                  onChange={e => setProductForm({...productForm, category: e.target.value})}
+                  className="w-full bg-surface-2 border border-border-subtle rounded-xl p-3 text-sm text-cream focus:outline-none focus:border-gold/40"
+                >
+                  <option value="floral">Floral</option>
+                  <option value="woody">Woody</option>
+                  <option value="spicy">Spicy</option>
+                  <option value="rare">Rare & Limited</option>
+                  <option value="fresh">Fresh</option>
+                  <option value="oriental">Oriental</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-cream-muted uppercase tracking-wider mb-2 font-semibold">Volume Unit</label>
+                <input 
+                  type="text" 
+                  value={productForm.volume} 
+                  onChange={e => setProductForm({...productForm, volume: e.target.value})} 
+                  className="w-full bg-surface-2 border border-border-subtle rounded-xl p-3 text-sm text-cream focus:outline-none focus:border-gold/40"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-cream-muted uppercase tracking-wider mb-2 font-semibold">Creative Badge</label>
+                <select 
+                  value={productForm.badge} 
+                  onChange={e => setProductForm({...productForm, badge: e.target.value})}
+                  className="w-full bg-surface-2 border border-border-subtle rounded-xl p-3 text-sm text-cream focus:outline-none focus:border-gold/40"
+                >
+                  <option value="">None</option>
+                  <option value="Bestseller">Bestseller</option>
+                  <option value="Classic">Classic</option>
+                  <option value="Premium">Premium</option>
+                  <option value="Rare">Rare</option>
+                  <option value="New">New</option>
+                  <option value="Limited">Limited</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-cream-muted uppercase tracking-wider mb-2 font-semibold">Color Swatch hex</label>
+                <input 
+                  type="color" 
+                  value={productForm.colorSwatch} 
+                  onChange={e => setProductForm({...productForm, colorSwatch: e.target.value})} 
+                  className="w-full h-11 bg-surface-2 border border-border-subtle rounded-xl p-1 focus:outline-none focus:border-gold/40"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-cream-muted uppercase tracking-wider mb-2 font-semibold">Image URL *</label>
+                <input 
+                  type="text" 
+                  value={productForm.image} 
+                  onChange={e => setProductForm({...productForm, image: e.target.value})} 
+                  required 
+                  className="w-full bg-surface-2 border border-border-subtle rounded-xl p-3 text-sm text-cream focus:outline-none focus:border-gold/40"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-cream-muted uppercase tracking-wider mb-2 font-semibold">Tags (comma separated)</label>
+                <input 
+                  type="text" 
+                  value={productForm.tags} 
+                  onChange={e => setProductForm({...productForm, tags: e.target.value})} 
+                  placeholder="e.g. bestseller, monsoon, earthy"
+                  className="w-full bg-surface-2 border border-border-subtle rounded-xl p-3 text-sm text-cream focus:outline-none focus:border-gold/40"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-cream-muted uppercase tracking-wider mb-2 font-semibold">Stock Quantity</label>
+                <input 
+                  type="number" 
+                  value={productForm.stockCount} 
+                  onChange={e => setProductForm({...productForm, stockCount: Number(e.target.value)})} 
+                  className="w-full bg-surface-2 border border-border-subtle rounded-xl p-3 text-sm text-cream focus:outline-none focus:border-gold/40"
+                />
+              </div>
+              <div className="flex gap-6 mt-8">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input 
+                    type="checkbox" 
+                    checked={productForm.inStock} 
+                    onChange={e => setProductForm({...productForm, inStock: e.target.checked})}
+                    className="accent-gold w-4 h-4"
+                  />
+                  <span className="text-xs uppercase text-cream-muted font-semibold tracking-wider">In Stock status</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input 
+                    type="checkbox" 
+                    checked={productForm.featured} 
+                    onChange={e => setProductForm({...productForm, featured: e.target.checked})}
+                    className="accent-gold w-4 h-4"
+                  />
+                  <span className="text-xs uppercase text-cream-muted font-semibold tracking-wider">Featured item</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-xs text-cream-muted uppercase tracking-wider mb-2 font-semibold">Fragrance Narrative / Detailed Description *</label>
+              <textarea 
+                value={productForm.description} 
+                onChange={e => setProductForm({...productForm, description: e.target.value})} 
+                required 
+                rows="4"
+                className="w-full bg-surface-2 border border-border-subtle rounded-xl p-3 text-sm text-cream focus:outline-none focus:border-gold/40 resize-y"
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-border-subtle">
+              <button 
+                type="button" 
+                onClick={() => setShowProductForm(false)}
+                className="px-6 py-3 rounded-full border border-border-default hover:bg-surface-2 text-xs font-body font-semibold tracking-wider transition-all"
+              >
+                Cancel
+              </button>
+              <button 
+                type="submit"
+                className="bg-gold-gradient hover:bg-gold-gradient-hover text-stone-950 px-8 py-3 rounded-full text-xs font-body font-bold tracking-wider transition-all shadow-md shadow-gold/15"
+              >
+                {editingProduct ? 'Save Changes' : 'Publish Fragrance'}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* Testimonials Review approval panel */}
+        {!loading && activeTab === 'testimonials' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {testimonials.map(t => (
+              <div key={t._id} className="border border-border-subtle bg-surface-1/40 p-6 rounded-2xl shadow-lg flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <svg key={i} className={`w-3.5 h-3.5 ${i < t.rating ? 'text-gold' : 'text-border-default'}`} fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                      ))}
+                    </div>
+                    <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-bold ${t.approved ? 'bg-gold-subtle text-gold border border-gold/15' : 'bg-yellow-950/20 text-yellow-400 border border-yellow-900/30'}`}>
+                      {t.approved ? 'Approved' : 'Pending Approval'}
+                    </span>
+                  </div>
+                  
+                  <p className="font-accent italic text-cream-muted text-base leading-relaxed mb-4">"{t.text}"</p>
+                </div>
+
+                <div className="pt-4 border-t border-border-subtle flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-body font-semibold text-cream">{t.name}</div>
+                    <div className="text-xs text-cream-ghost">{t.location}{t.productName ? ` · ${t.productName}` : ''}</div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleToggleApproval(t._id, t.approved)}
+                      className={`p-2 rounded-full border border-border-default transition-all ${
+                        t.approved 
+                          ? 'hover:border-yellow-900/40 hover:bg-yellow-950/20 hover:text-yellow-400 text-cream-muted' 
+                          : 'hover:border-gold/30 hover:bg-gold-subtle hover:text-gold text-cream-muted'
+                      }`}
+                      title={t.approved ? 'Move to Pending' : 'Approve Testimonial'}
+                    >
+                      {t.approved ? <XCircle className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
+                    </button>
+                    <button
+                      onClick={() => handleDeleteReview(t._id)}
+                      className="p-2 rounded-full border border-border-default hover:border-red-900/40 hover:bg-red-950/20 text-cream-muted hover:text-red-400 transition-all"
+                      title="Delete Testimonial"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {testimonials.length === 0 && (
+              <div className="col-span-2 text-center py-20 text-cream-ghost font-body">No testimonials submitted yet.</div>
+            )}
+          </div>
+        )}
+
+        {/* Newsletter Subscribers lists panel */}
+        {!loading && activeTab === 'subscribers' && (
+          <div className="border border-border-subtle bg-surface-1/30 rounded-2xl overflow-hidden shadow-xl max-w-3xl mx-auto">
+            <table className="w-full text-left border-collapse text-sm">
+              <thead>
+                <tr className="bg-surface-2/80 text-cream-ghost border-b border-border-subtle font-body text-xs uppercase tracking-wider">
+                  <th className="p-4 sm:p-5">Subscriber Email</th>
+                  <th className="p-4 sm:p-5">Subscription Date</th>
+                  <th className="p-4 sm:p-5 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border-subtle font-body">
+                {subscribers.map(s => (
+                  <tr key={s._id} className="hover:bg-surface-2/30 transition-colors">
+                    <td className="p-4 sm:p-5 font-semibold text-cream-muted">{s.email}</td>
+                    <td className="p-4 sm:p-5 text-xs text-cream-ghost">{new Date(s.subscribedAt).toLocaleDateString()}</td>
+                    <td className="p-4 sm:p-5 text-right">
+                      <button 
+                        onClick={() => handleDeleteSubscriber(s._id)} 
+                        className="p-2 rounded-full border border-border-default hover:border-red-900/40 hover:bg-red-950/20 text-cream-muted hover:text-red-400 transition-all" 
+                        title="Remove Subscriber"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {subscribers.length === 0 && (
+              <div className="text-center py-20 text-cream-ghost">No email subscribers found.</div>
+            )}
+          </div>
+        )}
+
+        {/* Invoice / Billing Workspace */}
+        {!loading && activeTab === 'billing' && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            {/* Left side: Invoice Creator Form */}
+            <div className="lg:col-span-5 space-y-6">
+              <div className="border border-border-subtle bg-surface-1/40 p-6 rounded-2xl shadow-xl space-y-5">
+                <h3 className="font-display text-lg text-gold border-b border-border-subtle pb-2 font-semibold">1. Recipient Information</h3>
+                <div className="space-y-4 font-body">
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-cream-ghost mb-1">Customer Full Name *</label>
+                    <input 
+                      type="text" 
+                      value={invoiceCustomer.name} 
+                      onChange={e => setInvoiceCustomer({ ...invoiceCustomer, name: e.target.value })} 
+                      placeholder="e.g. Rukmani Pall" 
+                      className="w-full bg-surface-2 border border-border-subtle rounded-xl p-2.5 text-xs text-cream focus:outline-none focus:border-gold/40"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-cream-ghost mb-1">Contact Email / Phone</label>
+                    <input 
+                      type="text" 
+                      value={invoiceCustomer.contact} 
+                      onChange={e => setInvoiceCustomer({ ...invoiceCustomer, contact: e.target.value })} 
+                      placeholder="e.g. +91 98765 43210" 
+                      className="w-full bg-surface-2 border border-border-subtle rounded-xl p-2.5 text-xs text-cream focus:outline-none focus:border-gold/40"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-cream-ghost mb-1">Billing / Delivery Address</label>
+                    <textarea 
+                      value={invoiceCustomer.address} 
+                      onChange={e => setInvoiceCustomer({ ...invoiceCustomer, address: e.target.value })} 
+                      placeholder="Address details..." 
+                      rows="2"
+                      className="w-full bg-surface-2 border border-border-subtle rounded-xl p-2.5 text-xs text-cream focus:outline-none focus:border-gold/40 resize-none"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] uppercase font-bold text-cream-ghost mb-1">Date</label>
+                      <input 
+                        type="date" 
+                        value={invoiceCustomer.date} 
+                        onChange={e => setInvoiceCustomer({ ...invoiceCustomer, date: e.target.value })} 
+                        className="w-full bg-surface-2 border border-border-subtle rounded-xl p-2.5 text-xs text-cream focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] uppercase font-bold text-cream-ghost mb-1">Invoice Code</label>
+                      <input 
+                        type="text" 
+                        value={invoiceId} 
+                        onChange={e => setInvoiceId(e.target.value)} 
+                        className="w-full bg-surface-2 border border-border-subtle rounded-xl p-2.5 text-xs text-cream focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border border-border-subtle bg-surface-1/40 p-6 rounded-2xl shadow-xl space-y-5">
+                <h3 className="font-display text-lg text-gold border-b border-border-subtle pb-2 font-semibold">2. Choose Products</h3>
+                <div className="space-y-4 font-body">
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-cream-ghost mb-1">Select Fragrance</label>
+                    <select 
+                      value={selectedProductId} 
+                      onChange={e => setSelectedProductId(e.target.value)}
+                      className="w-full bg-surface-2 border border-border-subtle rounded-xl p-2.5 text-xs text-cream focus:outline-none"
+                    >
+                      {products.map(p => (
+                        <option key={p._id} value={p._id}>{p.name} — ₹{p.price.toLocaleString('en-IN')}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 items-end">
+                    <div className="col-span-2">
+                      <label className="block text-[10px] uppercase font-bold text-cream-ghost mb-1">Quantity</label>
+                      <input 
+                        type="number" 
+                        min="1"
+                        value={selectedProductQty} 
+                        onChange={e => setSelectedProductQty(Number(e.target.value))} 
+                        className="w-full bg-surface-2 border border-border-subtle rounded-xl p-2.5 text-xs text-cream focus:outline-none"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleAddItemToInvoice}
+                      className="bg-gold-subtle hover:bg-gold/15 text-gold border border-gold/30 p-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all duration-300"
+                    >
+                      <PlusCircle className="w-4 h-4" /> Add Item
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border border-border-subtle bg-surface-1/40 p-6 rounded-2xl shadow-xl space-y-5">
+                <h3 className="font-display text-lg text-gold border-b border-border-subtle pb-2 font-semibold">3. Adjustments</h3>
+                <div className="grid grid-cols-2 gap-4 font-body">
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-cream-ghost mb-1">Special Discount (₹)</label>
+                    <input 
+                      type="number" 
+                      min="0"
+                      value={invoiceDiscount} 
+                      onChange={e => setInvoiceDiscount(Number(e.target.value))} 
+                      className="w-full bg-surface-2 border border-border-subtle rounded-xl p-2.5 text-xs text-cream focus:outline-none"
+                    />
+                  </div>
+                  <div className="flex items-end gap-2">
+                    <button
+                      type="button"
+                      onClick={handleClearInvoice}
+                      className="w-full border border-border-default hover:bg-surface-2 p-2.5 rounded-xl text-xs font-semibold text-cream-muted transition-all"
+                    >
+                      Reset Sheet
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right side: Live Stationery Invoice Sheet */}
+            <div className="lg:col-span-7 space-y-6">
+              
+              {/* Stationery Invoice wrapper */}
+              <div 
+                id="invoice-print-area" 
+                className="border border-border-default bg-white p-8 sm:p-12 rounded-2xl shadow-2xl text-stone-900 font-body relative overflow-hidden"
+              >
+                {/* Vintage Watermark Accent */}
+                <div className="absolute -top-10 -right-10 w-44 h-44 rounded-full border border-stone-200/50 flex items-center justify-center text-[100px] text-stone-100 font-display select-none pointer-events-none">अ</div>
+
+                {/* Logo & Store Header */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 border-b-2 border-stone-800 pb-6 mb-8">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full border-2 border-stone-800 flex items-center justify-center bg-stone-50">
+                      <span className="font-display text-stone-900 text-xl font-bold leading-none">अ</span>
+                    </div>
+                    <div>
+                      <h1 className="font-display text-xl font-bold tracking-wider leading-none text-stone-900">ATTARS PERFUMES</h1>
+                      <span className="text-[9px] tracking-[0.25em] uppercase text-stone-500 font-semibold mt-1 block">The Soul of Pure Fragrance</span>
+                    </div>
+                  </div>
+                  <div className="text-left sm:text-right text-[11px] text-stone-500 space-y-0.5 leading-tight">
+                    <div className="font-semibold text-stone-800">ATTARS DISTILLERY PRIVATE LTD</div>
+                    <div>12, Royal Perfumers Row, Kannauj, UP, India</div>
+                    <div>contact@attars.in · www.attars.in</div>
+                  </div>
+                </div>
+
+                {/* Tax Invoice Details / Bill To */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8 text-xs text-stone-600">
+                  <div className="space-y-1">
+                    <div className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">Billed Recipient:</div>
+                    <div className="text-sm font-bold text-stone-950">{invoiceCustomer.name || 'Walk-in Customer'}</div>
+                    {invoiceCustomer.contact && <div>{invoiceCustomer.contact}</div>}
+                    {invoiceCustomer.address && <div className="max-w-xs">{invoiceCustomer.address}</div>}
+                  </div>
+                  <div className="space-y-1 sm:text-right">
+                    <div className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">Invoice Info:</div>
+                    <div className="text-sm font-bold text-stone-950">{invoiceId}</div>
+                    <div><span className="font-semibold text-stone-800">Date:</span> {invoiceCustomer.date}</div>
+                    <div><span className="font-semibold text-stone-800">Supply State:</span> Uttar Pradesh (09)</div>
+                  </div>
+                </div>
+
+                {/* Items Table */}
+                <table className="w-full text-left border-collapse text-xs mb-8">
+                  <thead>
+                    <tr className="border-b-2 border-stone-800 font-bold text-stone-800 uppercase tracking-wider text-[10px]">
+                      <th className="py-2.5">Item Specification</th>
+                      <th className="py-2.5 text-center">Volume</th>
+                      <th className="py-2.5 text-center">Price</th>
+                      <th className="py-2.5 text-center">Qty</th>
+                      <th className="py-2.5 text-right">Net Value</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-stone-200">
+                    {invoiceItems.map((item, idx) => (
+                      <tr key={item._id || idx} className="text-stone-700">
+                        <td className="py-3 flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveItemFromInvoice(item._id)}
+                            className="p-1 rounded text-stone-400 hover:text-red-600 border border-transparent hover:border-red-200 print:hidden transition-colors"
+                            title="Remove"
+                          >
+                            <Trash className="w-3 h-3" />
+                          </button>
+                          <div>
+                            <div className="font-bold text-stone-900">{item.name}</div>
+                            {item.nameHindi && <div className="text-[10px] text-stone-400">{item.nameHindi}</div>}
+                          </div>
+                        </td>
+                        <td className="py-3 text-center">{item.volume || '12ml'}</td>
+                        <td className="py-3 text-center">₹{item.price.toLocaleString('en-IN')}</td>
+                        <td className="py-3 text-center">{item.qty}</td>
+                        <td className="py-3 text-right font-semibold">₹{(item.price * item.qty).toLocaleString('en-IN')}</td>
+                      </tr>
+                    ))}
+                    {invoiceItems.length === 0 && (
+                      <tr>
+                        <td colSpan="5" className="py-8 text-center text-stone-400 italic">No products added. Select items on the left to build the bill.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+
+                {/* Summary Calculations */}
+                <div className="border-t-2 border-stone-800 pt-6 flex flex-col sm:flex-row justify-between items-start gap-6">
+                  <div className="text-[11px] text-stone-500 leading-normal max-w-xs">
+                    <span className="font-bold text-stone-700 uppercase tracking-wider block mb-1">Terms & Attestations</span>
+                    Authentic raw floral oils extracted using natural deg-bhapka copper distillation. Store in dry cooling areas. Shelf life unlimited.
+                  </div>
+                  
+                  <div className="w-full sm:w-64 text-xs space-y-1.5">
+                    <div className="flex justify-between text-stone-600">
+                      <span>Total Value:</span>
+                      <span className="font-semibold">₹{invoiceItems.reduce((sum, item) => sum + (item.price * item.qty), 0).toLocaleString('en-IN')}</span>
+                    </div>
+                    {invoiceDiscount > 0 && (
+                      <div className="flex justify-between text-stone-600">
+                        <span>Less Discount:</span>
+                        <span className="font-semibold">-₹{invoiceDiscount.toLocaleString('en-IN')}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-stone-600">
+                      <span>Central Tax (CGST 9%):</span>
+                      <span>₹{(Math.max(0, invoiceItems.reduce((sum, item) => sum + (item.price * item.qty), 0) - invoiceDiscount) * 0.09).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
+                    </div>
+                    <div className="flex justify-between text-stone-600">
+                      <span>State Tax (SGST 9%):</span>
+                      <span>₹{(Math.max(0, invoiceItems.reduce((sum, item) => sum + (item.price * item.qty), 0) - invoiceDiscount) * 0.09).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
+                    </div>
+                    <div className="flex justify-between border-t border-stone-300 pt-2 text-sm font-bold text-stone-950">
+                      <span>Total Payable:</span>
+                      <span className="text-gold font-display text-base">₹{(
+                        Math.max(0, invoiceItems.reduce((sum, item) => sum + (item.price * item.qty), 0) - invoiceDiscount) * 1.18
+                      ).toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Signature Row */}
+                <div className="mt-12 pt-8 border-t border-stone-200 flex justify-between items-end text-[10px] text-stone-400">
+                  <div>
+                    <div>Verification Status: <span className="text-green-600 font-bold">APPROVED ONLINE</span></div>
+                    <div>Digital Trace ID: {invoiceId}-ATTAR</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="w-32 border-b border-stone-300 pb-1 text-center font-display italic text-stone-600">Manoj Attarwala</div>
+                    <div className="mt-1">Authorized Signatory</div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Action Buttons to print / save invoice */}
+              <div className="flex justify-end gap-3 p-4 border border-border-subtle bg-surface-1/40 rounded-2xl shadow-xl">
+                <button
+                  type="button"
+                  onClick={handleGenerateInvoice}
+                  disabled={invoiceItems.length === 0}
+                  className="bg-gold-gradient hover:bg-gold-gradient-hover text-stone-950 px-8 py-3 rounded-full text-xs font-bold tracking-wider transition-all duration-300 shadow-md shadow-gold/15 flex items-center gap-2 disabled:opacity-50"
+                >
+                  <Printer className="w-4 h-4" /> Print / Save Tax Invoice
+                </button>
+              </div>
+
+              {/* Invoices Log / Session History */}
+              {billingInvoices.length > 0 && (
+                <div className="border border-border-subtle bg-surface-1/40 p-6 rounded-2xl shadow-xl space-y-4">
+                  <h3 className="font-display text-sm text-cream font-semibold tracking-wide uppercase">Session Billing Registry</h3>
+                  <div className="divide-y divide-border-subtle max-h-60 overflow-y-auto scrollbar-thin">
+                    {billingInvoices.map((inv, idx) => (
+                      <div key={inv.invoiceId || idx} className="py-3 flex items-center justify-between gap-4 text-xs font-body">
+                        <div>
+                          <div className="font-display font-semibold text-cream">{inv.customer?.name || 'Walk-in'} ({inv.invoiceId})</div>
+                          <div className="text-[10px] text-cream-ghost mt-0.5">{inv.date} · {inv.items?.length} Items</div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="font-semibold text-gold">₹{inv.grandTotal?.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
+                          <button
+                            onClick={() => handleLoadInvoiceToGenerator(inv)}
+                            className="p-1 rounded border border-border-subtle hover:border-gold/30 text-cream-ghost hover:text-gold transition-colors"
+                            title="Edit / Reprint"
+                          >
+                            <FileText className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteInvoice(inv.invoiceId)}
+                            className="p-1 rounded border border-border-subtle hover:border-red-900/40 text-cream-ghost hover:text-red-400 transition-colors"
+                            title="Delete Record"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+            </div>
+
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
