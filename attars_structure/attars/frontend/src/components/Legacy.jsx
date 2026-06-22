@@ -32,7 +32,7 @@ export default function Legacy() {
           <p className="font-body text-cream-faint leading-[1.8] mb-8 text-[15px] max-w-2xl mx-auto">
             Each attar is crafted with hours of patient distillation, where delicate flowers harvested at dawn
             surrender their volatile souls into a base of pure sandalwood oil. No synthetic chemicals,
-            no artificial shortcuts, and zero alcohol. Just the pure, unadulterated soul of nature.
+            and no artificial shortcuts. Just the pure, unadulterated soul of nature.
           </p>
 
           {/* Stats */}
@@ -52,7 +52,7 @@ export default function Legacy() {
             <div>
               <div className="text-xl font-display font-bold text-cream">Zero</div>
               <div className="text-[11px] text-cream-faint font-body mt-1 leading-tight">
-                Alcohol &<br />Synthetics
+                Synthetics
               </div>
             </div>
           </div>
