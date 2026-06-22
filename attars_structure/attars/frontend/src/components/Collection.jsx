@@ -20,7 +20,7 @@ const fallbackProducts = [
     description: 'Capturing the quintessential Indian monsoon experience.',
     price: 2400, category: 'floral', badge: 'Bestseller',
     notes: { top: ['Wet Earth'], base: ['Sandalwood'] },
-    volume: '12ml', image: 'https://images.unsplash.com/photo-1594035910387-fbd1a485b12e?w=800&h=1000&fit=crop',
+    volume: '12ml', image: '/images/mitti_attar.jpg',
     colorSwatch: '#8B6914', rating: 4.9, reviewCount: 287
   },
   {
@@ -38,7 +38,7 @@ const fallbackProducts = [
     description: 'Sourced from government-regulated plantations in Mysore.',
     price: 4800, category: 'woody',
     notes: { top: ['Creamy Wood'], base: ['Musk'] },
-    volume: '12ml', image: 'https://images.unsplash.com/photo-1595425964272-fc617fa16e18?w=800&h=1000&fit=crop',
+    volume: '12ml', image: '/images/chandan_attar.jpg',
     colorSwatch: '#C4A35A', rating: 4.9, reviewCount: 198
   },
   {
@@ -74,7 +74,7 @@ const fallbackProducts = [
     description: 'A symphony of over 60 natural ingredients.',
     price: 15000, category: 'rare', badge: 'Limited',
     notes: { top: ['Saffron', 'Cardamom'], base: ['Amber', 'Musk'] },
-    volume: '12ml', image: 'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=800&h=1000&fit=crop',
+    volume: '12ml', image: '/images/shamama_attar.jpg',
     colorSwatch: '#6B4423', rating: 5.0, reviewCount: 47
   },
   {
