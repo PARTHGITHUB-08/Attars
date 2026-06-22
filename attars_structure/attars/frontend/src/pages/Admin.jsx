@@ -1065,7 +1065,7 @@ export default function Admin() {
                     <div className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">Invoice Info:</div>
                     <div className="text-sm font-bold text-stone-950">{invoiceId}</div>
                     <div><span className="font-semibold text-stone-800">Date:</span> {invoiceCustomer.date}</div>
-                    <div><span className="font-semibold text-stone-800">Supply State:</span> Uttar Pradesh (09)</div>
+                    <div><span className="font-semibold text-stone-800">Supply State:</span> Gujrat (24)</div>
                   </div>
                 </div>
 
