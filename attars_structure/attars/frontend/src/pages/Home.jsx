@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '../components/Navbar';
 import Hero from '../components/Hero';
 import Marquee from '../components/Marquee';
@@ -15,32 +15,34 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const hasLoaded = sessionStorage.getItem('attars_loaded');
-    if (hasLoaded) {
+    const timer = setTimeout(() => {
       setLoading(false);
-    } else {
-      const timer = setTimeout(() => {
-        setLoading(false);
-        sessionStorage.setItem('attars_loaded', 'true');
-      }, 2200);
-      return () => clearTimeout(timer);
-    }
+    }, 2500); // 2.5 seconds
+    return () => clearTimeout(timer);
   }, []);
 
   return (
-    <>
-      <AnimatePresence mode="wait">
-        {loading && <Preloader key="loader" />}
-      </AnimatePresence>
-      <Navbar />
-      <Hero />
-      <Marquee />
-      <Legacy />
-      <Process />
-      <Collection />
-      <Newsletter />
-      <Footer />
-      <BackToTop />
-    </>
+    <AnimatePresence mode="wait">
+      {loading ? (
+        <Preloader key="loader" />
+      ) : (
+        <motion.div
+          key="content"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1, ease: "easeOut" }}
+        >
+          <Navbar />
+          <Hero />
+          <Marquee />
+          <Legacy />
+          <Process />
+          <Collection />
+          <Newsletter />
+          <Footer />
+          <BackToTop />
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
