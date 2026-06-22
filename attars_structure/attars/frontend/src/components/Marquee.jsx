@@ -3,12 +3,12 @@ import React from 'react';
 const marqueeItems = [
   "100% Natural Distillation",
   "Pure Natural Fragrances",
-  "No Alcohol & No Chemicals",
+  "Pure Botanical Oils",
   "Mysore Sandalwood Base",
   "Damask Rose Harvested at Dawn",
   "Assamese Agarwood (Liquid Gold)",
   "The Scent of First Rain (Mitti)",
-  "Deg-Bhapka Traditional Distillation"
+  "Artisanal Hydro-Distillation"
 ];
 
 export default function Marquee() {

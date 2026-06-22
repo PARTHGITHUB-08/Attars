@@ -1039,7 +1039,7 @@ export default function Admin() {
                 <div className="border-t-2 border-stone-800 pt-6 flex flex-col sm:flex-row justify-between items-start gap-6">
                   <div className="text-[11px] text-stone-500 leading-normal max-w-xs">
                     <span className="font-bold text-stone-700 uppercase tracking-wider block mb-1">Terms & Attestations</span>
-                    Authentic raw floral oils extracted using natural deg-bhapka copper distillation. Store in dry cooling areas. Shelf life unlimited.
+                    Authentic raw floral oils extracted using traditional hydro-distillation. Store in dry cooling areas. Shelf life unlimited.
                   </div>
                   
                   <div className="w-full sm:w-64 text-xs space-y-1.5">

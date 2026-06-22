@@ -41,7 +41,7 @@ export default function Hero() {
           <span className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full border border-gold/20 bg-gold-subtle backdrop-blur-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />
             <span className="text-[11px] font-body font-medium tracking-[0.2em] uppercase text-gold">
-              Premium Natural Attars · Alcohol Free
+              Premium Natural Attars · Handcrafted in Small Batches
             </span>
           </span>
         </motion.div>
@@ -71,8 +71,8 @@ export default function Hero() {
           transition={{ duration: 0.7, delay: 0.7 }}
           className="font-body text-sm sm:text-base text-cream-faint max-w-xl mx-auto mb-10 leading-relaxed"
         >
-          Natural attars distilled through the ancient Deg-Bhapka technique — no alcohol,
-          no chemicals, just flowers, fire, and centuries of devotion.
+          Natural perfumes composed through traditional hydro-distillation — pure botanical extracts,
+          organic carriers, and masterly patience.
         </motion.p>
 
         <motion.div

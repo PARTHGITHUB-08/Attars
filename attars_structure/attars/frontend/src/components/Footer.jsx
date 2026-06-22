@@ -3,7 +3,7 @@ import { useToast } from '../context/ToastContext';
 import { Link } from 'react-router-dom';
 
 const shopLinks = ['All Attars', 'Floral Collection', 'Woody Collection', 'Spicy Collection', 'Rare & Limited'];
-const learnLinks = ['Our Story', 'Deg-Bhapka Process', 'Blog', 'FAQ'];
+const learnLinks = ['Our Story', 'Our Process', 'Blog', 'FAQ'];
 const supportLinks = [
   { label: 'Contact Us', href: '#contact', external: false },
   { label: 'Shipping Info', href: '#contact', external: false },
@@ -34,7 +34,7 @@ export default function Footer() {
             </div>
             <p className="text-[13px] text-cream-faint font-body leading-[1.7] mb-5 max-w-xs">
               Handcrafted natural attars. Preserving the pure art of traditional
-              steam distillation for the modern fragrance connoisseur.
+              hydro-distillation for the modern fragrance connoisseur.
             </p>
 
             {/* Contact */}

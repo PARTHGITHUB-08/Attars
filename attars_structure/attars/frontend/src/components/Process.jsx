@@ -1,34 +1,34 @@
 import { ScrollReveal } from '../hooks/useScrollReveal';
-import { Flower2, Flame, Droplets, Gem } from 'lucide-react';
+import { Leaf, Droplets, Beaker, Sparkles } from 'lucide-react';
 
 const steps = [
   {
-    icon: Flower2,
+    icon: Leaf,
     step: '01',
-    title: 'Harvesting',
-    desc: 'Flowers plucked by hand at dawn — before sunrise opens the petals and evaporates the precious essential oils. Each picker harvests only 2-3 kg per morning.',
-    detail: 'Rose: 4-6 AM | Jasmine: 12-4 AM | Saffron: Oct-Nov only'
-  },
-  {
-    icon: Flame,
-    step: '02',
-    title: 'Deg-Bhapka',
-    desc: 'Copper stills (Deg) filled with flowers and water sit over cow-dung fires. A receiver (Bhapka) containing sandalwood oil sits in a water bath to capture condensing vapours.',
-    detail: 'Temperature: 80-90°C | Duration: 15-20 hours continuous'
+    title: 'Ethical Sourcing',
+    desc: 'We ethically source wild-grown and organic botanicals at their peak aromatic hour — hand-harvested Damask Rose at dawn and Night Jasmine at midnight to capture the absolute highest concentration of volatile oils.',
+    detail: 'Damask Rose: Kannauj | Jasmine: Madurai | Saffron: Pampore'
   },
   {
     icon: Droplets,
-    step: '03',
-    title: 'Absorption',
-    desc: 'As aromatic vapours condense, they mix with water and flow into the Bhapka where sandalwood oil absorbs the fragrance molecules. Water is drained; oil remains enriched.',
-    detail: 'Ratio: 1kg flowers → ~10ml pure attar'
+    step: '02',
+    title: 'Hydro-Distillation',
+    desc: 'Aromatic compounds are extracted using low-temperature, vacuum-regulated hydro-distillation. This gentle process protects the delicate top notes from thermal damage, preserving absolute olfactory fidelity.',
+    detail: 'Method: Vacuum Hydro | Heat: Controlled Low-Temp | Yield: 100% Pure'
   },
   {
-    icon: Gem,
+    icon: Beaker,
+    step: '03',
+    title: 'Sandalwood Maturation',
+    desc: 'Precious botanical extracts are matured directly inside a base of aged Mysore Sandalwood carrier oil, creating a rich, living fixative that naturally binds and amplifies the complex fragrance layers.',
+    detail: 'Carrier: Aged Mysore Sandalwood | Ratio: Pure Oil Base'
+  },
+  {
+    icon: Sparkles,
     step: '04',
-    title: 'Maturation',
-    desc: 'The raw attar is sealed in traditional kuppis (earthen pots) or deer-skin bottles for months. The fragrance deepens, mellows, and reaches its full complexity over time.',
-    detail: 'Aging: 3-12 months | Some attars improve for years'
+    title: 'Cellared Maceration',
+    desc: 'The final compositions are cellared in amber glass vessels for six months. This slow resting period allows the molecular layers to settle, smoothing raw notes and developing maximum longevity.',
+    detail: 'Cellaring: 6 Months | Temperature: 18°C Controlled'
   }
 ];
 
@@ -41,14 +41,14 @@ export default function Process() {
       <div className="relative z-10 max-w-7xl mx-auto px-5 sm:px-8">
         <ScrollReveal className="text-center mb-14 sm:mb-20">
           <span className="text-[11px] tracking-[0.3em] uppercase text-gold/60 font-body font-medium">
-            The Sacred Process
+            Artisanal Craftsmanship
           </span>
           <h2 className="font-display text-display-md sm:text-display-lg text-cream mt-4">
-            From Petal to <span className="text-gold">Attar</span>
+            The Journey of <span className="text-gold">Creation</span>
           </h2>
           <p className="font-body text-cream-faint text-sm max-w-lg mx-auto mt-4 leading-relaxed">
-            A 400-year-old technique that modern chemistry cannot replicate — the Deg-Bhapka
-            method preserves the complete olfactory fingerprint of each flower.
+            Composing luxury fragrances through low-temperature hydro-distillation, sandalwood oil maturation,
+            and cellared maceration to capture the true depth of nature.
           </p>
         </ScrollReveal>
 

@@ -24,15 +24,15 @@ export default function Legacy() {
           </h2>
 
           <p className="font-body text-cream-muted leading-[1.8] mb-5 text-[15px] max-w-2xl mx-auto">
-            We believe in preserving the traditional art of <strong className="text-cream-dark font-semibold">Deg-Bhapka</strong>,
-            a steam distillation technique that captures the true essence of nature. By using local copper stills and pure base ingredients,
-            we create fragrances that honor time-tested methods while appealing to the modern olfactory sensibility.
+            We believe in preserving the traditional art of <strong className="text-cream-dark font-semibold">artisanal hydro-distillation</strong>,
+            a time-honored extraction technique that captures the truest essence of nature. By combining pristine botanicals and rare base ingredients,
+            we create fragrances that celebrate classical perfumery while appealing to the modern olfactory sensibility.
           </p>
 
           <p className="font-body text-cream-faint leading-[1.8] mb-8 text-[15px] max-w-2xl mx-auto">
-            Each attar is crafted with hours of patient distillation, where delicate flowers harvested at dawn
-            surrender their volatile souls into a base of pure sandalwood oil. No synthetic chemicals,
-            and no artificial shortcuts. Just the pure, unadulterated soul of nature.
+            Each attar is crafted through patient, low-temperature distillation, where delicate blossoms harvested at dawn
+            bind directly into a base of pure sandalwood oil. With no synthetic chemicals
+            and no shortcuts, we preserve the unadulterated soul of nature.
           </p>
 
           {/* Stats */}
