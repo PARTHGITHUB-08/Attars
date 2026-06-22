@@ -10,7 +10,7 @@ export default function App() {
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.ctrlKey && (e.key === 'p' || e.key === 'P')) {
+      if (e.ctrlKey && (e.key === 'a' || e.key === 'A')) {
         e.preventDefault();
         localStorage.setItem('attars_admin_key', 'attars-admin-2026');
         navigate('/admin');
