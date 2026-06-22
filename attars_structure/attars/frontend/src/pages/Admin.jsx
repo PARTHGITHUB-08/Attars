@@ -10,9 +10,7 @@ import api from '../api/axios';
 import { useToast } from '../context/ToastContext';
 
 export default function Admin() {
-  const [secretKey, setSecretKey] = useState(localStorage.getItem('attars_admin_key') || 'attars-admin-2026');
-  const [keyInput, setKeyInput] = useState('attars-admin-2026');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const secretKey = 'attars-admin-2026';
   const [activeTab, setActiveTab] = useState('products');
   const { showToast } = useToast();
 
@@ -53,46 +51,14 @@ export default function Admin() {
     origin: ''
   });
 
-  // Verify Key on Mount or Entry
+  // Load all records on component mount
   useEffect(() => {
-    if (secretKey) {
-      verifyKey(secretKey);
-    }
-  }, [secretKey]);
-
-  const verifyKey = async (key) => {
-    setLoading(true);
-    try {
-      // Test key by requesting admin testimonials list
-      await api.get('/testimonials/admin', {
-        headers: { 'x-admin-key': key }
-      });
-      setIsAuthenticated(true);
-      localStorage.setItem('attars_admin_key', key);
-      showToast('Authenticated as Administrator', 'success');
-      loadAllData(key);
-    } catch (err) {
-      setIsAuthenticated(false);
-      localStorage.removeItem('attars_admin_key');
-      setSecretKey('');
-      showToast('Invalid Secret Key', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleLoginSubmit = (e) => {
-    e.preventDefault();
-    if (!keyInput.trim()) return;
-    setSecretKey(keyInput.trim());
-  };
+    loadAllData('attars-admin-2026');
+  }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('attars_admin_key');
-    setIsAuthenticated(false);
-    setSecretKey('');
-    setKeyInput('');
-    showToast('Logged out of Admin Panel');
+    showToast('Exited Admin Panel');
+    window.location.href = '/';
   };
 
   const loadAllData = async (key = secretKey) => {
@@ -407,49 +373,7 @@ export default function Admin() {
     showToast('Invoice details loaded into editor');
   };
 
-  // Render Login Prompt if Unauthenticated
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-surface-0 flex items-center justify-center px-5 relative overflow-hidden select-none">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(200,169,110,0.03),transparent_70%)]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-gold/[0.015] blur-[100px]" />
-        
-        <form onSubmit={handleLoginSubmit} className="relative z-10 w-full max-w-md p-8 rounded-2xl border border-border-subtle bg-surface-1/50 backdrop-blur-2xl shadow-2xl shadow-black/50 text-center">
-          <div className="w-16 h-16 rounded-full border border-gold/30 flex items-center justify-center bg-gold-subtle mx-auto mb-6">
-            <Shield className="w-6 h-6 text-gold" />
-          </div>
-          <h1 className="font-display text-2xl text-cream mb-2">Administrative Access</h1>
-          <p className="font-body text-xs text-cream-ghost mb-8 uppercase tracking-widest">Attars Perfumes Portal</p>
-          
-          <div className="relative mb-6">
-            <Key className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-cream-ghost" />
-            <input 
-              type="password"
-              value={keyInput}
-              onChange={(e) => setKeyInput(e.target.value)}
-              placeholder="Enter Administrator Key..."
-              required
-              className="w-full pl-12 pr-4 py-3.5 rounded-full bg-surface-2 border border-border-subtle text-cream placeholder-cream-ghost text-sm focus:outline-none focus:border-gold/40 transition-all duration-300"
-            />
-          </div>
 
-          <button 
-            type="submit" 
-            disabled={loading}
-            className="w-full bg-gold-gradient hover:bg-gold-gradient-hover text-stone-950 py-3.5 rounded-full text-sm font-body font-semibold tracking-wide shadow-lg shadow-gold/15 transition-all duration-300 hover:translate-y-[-1px] disabled:opacity-50"
-          >
-            {loading ? 'Validating credentials...' : 'Authenticate'}
-          </button>
-          
-          <div className="mt-8 pt-6 border-t border-border-subtle">
-            <Link to="/" className="inline-flex items-center gap-2 text-xs text-cream-ghost hover:text-gold transition-colors">
-              <Home className="w-3.5 h-3.5" /> Back to Storefront
-            </Link>
-          </div>
-        </form>
-      </div>
-    );
-  }
 
   // Render Dashboard if Authenticated
   return (
