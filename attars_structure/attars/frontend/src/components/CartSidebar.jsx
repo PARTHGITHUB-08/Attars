@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus, Minus, Trash2, ShoppingBag, CreditCard, Sparkles, CheckCircle2 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useToast } from '../context/ToastContext';
 import api from '../api/axios';
 
 export default function CartSidebar() {
   const { cartOpen, setCartOpen, items, updateQuantity, removeItem, total, count, clearCart } = useCart();
+  const { showToast } = useToast();
   const [checkoutStep, setCheckoutStep] = useState('cart'); // 'cart', 'details', 'success'
-  const [customer, setCustomer] = useState({ name: '', contact: '', address: '' });
+  const [customer, setCustomer] = useState({ name: '', phone: '', email: '', address: '' });
   const [placedOrder, setPlacedOrder] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('UPI'); // 'UPI' or 'Cash'
 
@@ -25,9 +27,39 @@ export default function CartSidebar() {
     updateQuantity(id, newQty);
   };
 
+  const validatePhone = (phone) => {
+    const phoneRegex = /^\+?[0-9]{10,14}$/;
+    return phoneRegex.test(phone.replace(/\s+/g, ''));
+  };
+
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email.trim());
+  };
+
+  const handleProceedToVerify = () => {
+    if (!customer.name.trim()) {
+      showToast('Recipient name is required', 'error');
+      return;
+    }
+    if (!validatePhone(customer.phone)) {
+      showToast('Please enter a valid phone number (10-14 digits)', 'error');
+      return;
+    }
+    if (!validateEmail(customer.email)) {
+      showToast('Please enter a valid email address', 'error');
+      return;
+    }
+    if (!customer.address.trim()) {
+      showToast('Shipping address is required', 'error');
+      return;
+    }
+    setCheckoutStep('verify');
+  };
+
   const handleCheckoutSubmit = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
-    if (!customer.name || !customer.contact || !customer.address) return;
+    if (!customer.name || !customer.phone || !customer.email || !customer.address) return;
     
     const phoneNumber = '919313319897';
     const orderId = `ORD-${Date.now().toString().slice(-6).toUpperCase()}`;
@@ -38,7 +70,8 @@ export default function CartSidebar() {
     message += `*Date:* ${date}\n\n`;
     message += `*Customer Details:*\n`;
     message += `- Name: ${customer.name}\n`;
-    message += `- Contact: ${customer.contact}\n`;
+    message += `- Phone: ${customer.phone}\n`;
+    message += `- Email: ${customer.email}\n`;
     message += `- Shipping Address: ${customer.address}\n\n`;
     message += `*Payment Method:* ${paymentMethod === 'UPI' ? 'UPI (Scan & Pay)' : 'Cash on Delivery'}\n\n`;
     message += `*Items Ordered:*\n`;
@@ -66,7 +99,12 @@ export default function CartSidebar() {
       cgst: Number((total * 0.09).toFixed(2)),
       sgst: Number((total * 0.09).toFixed(2)),
       grandTotal: total,
-      customer: { ...customer, date },
+      customer: {
+        name: customer.name,
+        contact: `${customer.phone.trim()} ${customer.email.trim()}`,
+        address: customer.address,
+        date
+      },
       paymentMethod,
       paymentStatus: 'Pending'
     };
@@ -206,7 +244,7 @@ export default function CartSidebar() {
                 )}
 
                 {checkoutStep === 'details' && (
-                  <form onSubmit={(e) => { e.preventDefault(); setCheckoutStep('verify'); }} className="space-y-5">
+                  <form onSubmit={(e) => { e.preventDefault(); handleProceedToVerify(); }} className="space-y-5">
                     <div>
                       <label className="block text-xs font-semibold uppercase text-cream-muted tracking-wider mb-2">Recipient Full Name *</label>
                       <input
@@ -219,13 +257,24 @@ export default function CartSidebar() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold uppercase text-cream-muted tracking-wider mb-2">Phone Number / Email *</label>
+                      <label className="block text-xs font-semibold uppercase text-cream-muted tracking-wider mb-2">Phone Number *</label>
                       <input
-                        type="text"
-                        value={customer.contact}
-                        onChange={e => setCustomer({ ...customer, contact: e.target.value })}
+                        type="tel"
+                        value={customer.phone}
+                        onChange={e => setCustomer({ ...customer, phone: e.target.value })}
                         required
-                        placeholder="e.g. +91 98765 43210"
+                        placeholder="e.g. 9876543210"
+                        className="w-full bg-surface-2 border border-border-subtle rounded-xl p-3 text-sm text-cream focus:outline-none focus:border-gold/40 placeholder-cream-ghost transition-all duration-300"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold uppercase text-cream-muted tracking-wider mb-2">Email Address *</label>
+                      <input
+                        type="email"
+                        value={customer.email}
+                        onChange={e => setCustomer({ ...customer, email: e.target.value })}
+                        required
+                        placeholder="e.g. customer@example.com"
                         className="w-full bg-surface-2 border border-border-subtle rounded-xl p-3 text-sm text-cream focus:outline-none focus:border-gold/40 placeholder-cream-ghost transition-all duration-300"
                       />
                     </div>
@@ -298,7 +347,8 @@ export default function CartSidebar() {
                       <h3 className="text-xs uppercase font-bold text-gold tracking-wider">Delivery Destination</h3>
                       <div className="text-xs space-y-1.5 font-body text-cream-muted">
                         <div><span className="font-semibold text-cream">Name:</span> {customer.name}</div>
-                        <div><span className="font-semibold text-cream">Contact:</span> {customer.contact}</div>
+                        <div><span className="font-semibold text-cream">Phone:</span> {customer.phone}</div>
+                        <div><span className="font-semibold text-cream">Email:</span> {customer.email}</div>
                         <div><span className="font-semibold text-cream">Address:</span> {customer.address}</div>
                         <div><span className="font-semibold text-cream">Payment Mode:</span> {paymentMethod === 'UPI' ? 'UPI (Scan & Pay)' : 'Cash on Delivery'}</div>
                       </div>
@@ -480,8 +530,8 @@ export default function CartSidebar() {
                     Back to Bag
                   </button>
                   <button
-                    onClick={() => setCheckoutStep('verify')}
-                    disabled={!customer.name || !customer.contact || !customer.address}
+                    onClick={handleProceedToVerify}
+                    disabled={!customer.name || !customer.phone || !customer.email || !customer.address}
                     className="flex-2 bg-gold-gradient hover:bg-gold-gradient-hover text-stone-950 px-8 py-3 rounded-full text-xs font-bold tracking-wider transition-all duration-300 shadow-md shadow-gold/15 disabled:opacity-50"
                   >
                     Continue to Verify
