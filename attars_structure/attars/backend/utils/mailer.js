@@ -223,3 +223,51 @@ export const sendInvoiceEmail = async (customerEmail, customerName, invoiceId, i
     return false;
   }
 };
+
+export const sendResetKeyEmail = async (email, key) => {
+  const host = process.env.EMAIL_HOST || 'smtp.gmail.com';
+  const port = parseInt(process.env.EMAIL_PORT || '587');
+  const user = process.env.EMAIL_USER || 'parthgelani08@gmail.com';
+  const pass = process.env.EMAIL_PASS;
+
+  if (!pass) {
+    console.warn('[Mailer] EMAIL_PASS is not configured in .env. Skipping sendResetKeyEmail.');
+    return false;
+  }
+
+  const transporter = nodemailer.createTransport({
+    host,
+    port,
+    secure: port === 465,
+    auth: {
+      user,
+      pass,
+    },
+  });
+
+  const mailOptions = {
+    from: `"Attraz Perfumes Security" <${user}>`,
+    to: email,
+    subject: '[Attraz Perfumes] Security Reset Key',
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5d5b7; background-color: #faf8f5; color: #2c2520;">
+        <h2 style="color: #8b6914; border-bottom: 2px solid #8b6914; padding-bottom: 10px;">Security Access Recovery</h2>
+        <p>A request was received to reset your Attraz Perfumes Admin credentials.</p>
+        <p>Please use the security recovery key below to reset your password in the admin panel:</p>
+        <div style="text-align: center; margin: 30px 0; padding: 15px; background-color: #8b6914; color: #ffffff; font-size: 24px; font-weight: bold; border-radius: 8px; letter-spacing: 4px; font-family: monospace;">
+          \${key}
+        </div>
+        <p style="font-size: 11px; color: #8e7a6e;">This key is temporary and will expire shortly. If you did not request this, please verify your server security immediately.</p>
+      </div>
+    `,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`[Mailer] Reset key email successfully sent to \${email}`);
+    return true;
+  } catch (error) {
+    console.error('[Mailer] Error sending reset key email:', error);
+    return false;
+  }
+};

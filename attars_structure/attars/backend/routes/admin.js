@@ -71,4 +71,58 @@ router.put('/credentials', async (req, res) => {
   res.json({ success: true, message: 'Credentials updated successfully' });
 });
 
+// Store reset code in-memory temporarily
+let activeResetKey = '';
+
+// POST /api/admin/forgot-password
+router.post('/forgot-password', async (req, res, next) => {
+  try {
+    const resetKey = Math.floor(100000 + Math.random() * 900000).toString();
+    activeResetKey = resetKey;
+
+    // Send reset key email
+    const { sendResetKeyEmail } = await import('../utils/mailer.js');
+    await sendResetKeyEmail('parthgelani08@gmail.com', resetKey);
+
+    res.json({ success: true, message: 'Security reset key sent to parthgelani08@gmail.com' });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/admin/reset-password
+router.post('/reset-password', async (req, res, next) => {
+  try {
+    const { key, username, password } = req.body;
+    if (!key || !username || !password) {
+      return res.status(400).json({ success: false, message: 'Key, username, and password are required' });
+    }
+
+    if (key.trim() !== activeResetKey) {
+      return res.status(400).json({ success: false, message: 'Invalid verification key' });
+    }
+
+    // Key is verified. Save new credentials
+    if (mongoose.connection.readyState !== 1) {
+      saveAdminCredentials(username, password);
+    } else {
+      let settings = await AdminSettings.findOne();
+      if (!settings) {
+        settings = new AdminSettings({ username, password });
+      } else {
+        settings.username = username;
+        settings.password = password;
+      }
+      await settings.save();
+    }
+
+    // Clear reset key
+    activeResetKey = '';
+
+    res.json({ success: true, message: 'Credentials reset successfully' });
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;

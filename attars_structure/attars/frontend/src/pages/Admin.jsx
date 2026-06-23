@@ -19,6 +19,11 @@ export default function Admin() {
   const [loginUser, setLoginUser] = useState('');
   const [loginPass, setLoginPass] = useState('');
   const [authError, setAuthError] = useState('');
+  const [loginMode, setLoginMode] = useState('login'); // 'login' or 'forgot'
+  const [resetKeySent, setResetKeySent] = useState(false);
+  const [resetKey, setResetKey] = useState('');
+  const [newUsername, setNewUsername] = useState('');
+  const [newPassword, setNewPassword] = useState('');
 
   // Security Form States
   const [securityUsername, setSecurityUsername] = useState('');
@@ -94,6 +99,49 @@ export default function Admin() {
     } catch (err) {
       setAuthError(err.response?.data?.message || 'Invalid credentials');
       showToast('Authentication failed', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSendResetKey = async () => {
+    setLoading(true);
+    try {
+      const res = await api.post('/admin/forgot-password');
+      if (res.success) {
+        showToast('Reset key emailed to parthgelani08@gmail.com', 'success');
+        setResetKeySent(true);
+      }
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Error sending reset key', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetSubmit = async (e) => {
+    e.preventDefault();
+    if (!resetKey || !newUsername || !newPassword) {
+      showToast('All fields are required', 'error');
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await api.post('/admin/reset-password', {
+        key: resetKey,
+        username: newUsername,
+        password: newPassword
+      });
+      if (res.success) {
+        showToast('Credentials reset successfully! Please log in.', 'success');
+        setLoginMode('login');
+        setResetKeySent(false);
+        setResetKey('');
+        setNewUsername('');
+        setNewPassword('');
+      }
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Invalid key or reset error', 'error');
     } finally {
       setLoading(false);
     }
@@ -496,58 +544,169 @@ export default function Admin() {
         {/* Background elements */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-gold/[0.02] blur-[80px] pointer-events-none" />
         
-        <form onSubmit={handleLogin} className="w-full max-w-sm border border-border-subtle bg-surface-1/40 p-8 rounded-2xl shadow-2xl relative space-y-6">
-          <div className="text-center pb-4 border-b border-border-subtle">
-            <div className="w-12 h-12 rounded-full border border-gold/30 flex items-center justify-center bg-gold-subtle mx-auto mb-3">
-              <span className="font-display text-gold text-lg font-bold">अ</span>
+        {loginMode === 'login' ? (
+          <form onSubmit={handleLogin} className="w-full max-w-sm border border-border-subtle bg-surface-1/40 p-8 rounded-2xl shadow-2xl relative space-y-6">
+            <div className="text-center pb-4 border-b border-border-subtle">
+              <div className="w-12 h-12 rounded-full border border-gold/30 flex items-center justify-center bg-gold-subtle mx-auto mb-3">
+                <span className="font-display text-gold text-sm font-semibold">अ</span>
+              </div>
+              <h2 className="font-display text-lg font-bold tracking-wider text-cream">ATTRAZ ADMIN PORTAL</h2>
+              <p className="text-[10px] text-cream-ghost uppercase tracking-[0.2em] mt-1">Security Authenticator</p>
             </div>
-            <h2 className="font-display text-lg font-bold tracking-wider text-cream">ATTRAZ ADMIN PORTAL</h2>
-            <p className="text-[10px] text-cream-ghost uppercase tracking-[0.2em] mt-1">Security Authenticator</p>
-          </div>
 
-          {authError && (
-            <div className="text-xs text-red-400 bg-red-950/20 border border-red-900/30 p-3 rounded-xl text-center">
-              {authError}
-            </div>
-          )}
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-[10px] uppercase font-bold text-cream-ghost mb-1">Username</label>
-              <input 
-                type="text" 
-                value={loginUser} 
-                onChange={e => setLoginUser(e.target.value)} 
-                required 
-                placeholder="Username" 
-                className="w-full bg-surface-2 border border-border-subtle rounded-xl p-3 text-xs text-cream focus:outline-none focus:border-gold/40 placeholder-cream-ghost"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] uppercase font-bold text-cream-ghost mb-1">Password</label>
-              <input 
-                type="password" 
-                value={loginPass} 
-                onChange={e => setLoginPass(e.target.value)} 
-                required 
-                placeholder="Password" 
-                className="w-full bg-surface-2 border border-border-subtle rounded-xl p-3 text-xs text-cream focus:outline-none focus:border-gold/40 placeholder-cream-ghost"
-              />
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-gold-gradient hover:bg-gold-gradient-hover text-stone-950 py-3 rounded-full text-xs font-bold tracking-wider transition-all duration-300 shadow-md shadow-gold/15 flex items-center justify-center gap-2"
-          >
-            {loading ? (
-              <div className="w-4 h-4 border-2 border-stone-950/30 border-t-stone-950 rounded-full animate-spin" />
-            ) : (
-              'Authenticate Access'
+            {authError && (
+              <div className="text-xs text-red-400 bg-red-950/20 border border-red-900/30 p-3 rounded-xl text-center">
+                {authError}
+              </div>
             )}
-          </button>
-        </form>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-cream-ghost mb-1">Username</label>
+                <input 
+                  type="text" 
+                  value={loginUser} 
+                  onChange={e => setLoginUser(e.target.value)} 
+                  required 
+                  placeholder="Username" 
+                  className="w-full bg-surface-2 border border-border-subtle rounded-xl p-3 text-xs text-cream focus:outline-none focus:border-gold/40 placeholder-cream-ghost"
+                />
+              </div>
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="block text-[10px] uppercase font-bold text-cream-ghost">Password</label>
+                  <button
+                    type="button"
+                    onClick={() => { setLoginMode('forgot'); setAuthError(''); }}
+                    className="text-gold hover:text-gold-light text-[10px] uppercase tracking-wider font-bold transition-colors"
+                  >
+                    Forgot?
+                  </button>
+                </div>
+                <input 
+                  type="password" 
+                  value={loginPass} 
+                  onChange={e => setLoginPass(e.target.value)} 
+                  required 
+                  placeholder="Password" 
+                  className="w-full bg-surface-2 border border-border-subtle rounded-xl p-3 text-xs text-cream focus:outline-none focus:border-gold/40 placeholder-cream-ghost"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-gold-gradient hover:bg-gold-gradient-hover text-stone-950 py-3 rounded-full text-xs font-bold tracking-wider transition-all duration-300 shadow-md shadow-gold/15 flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <div className="w-4 h-4 border-2 border-stone-950/30 border-t-stone-950 rounded-full animate-spin" />
+              ) : (
+                'Authenticate Access'
+              )}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleResetSubmit} className="w-full max-w-sm border border-border-subtle bg-surface-1/40 p-8 rounded-2xl shadow-2xl relative space-y-6">
+            <div className="text-center pb-4 border-b border-border-subtle">
+              <div className="w-12 h-12 rounded-full border border-gold/30 flex items-center justify-center bg-gold-subtle mx-auto mb-3">
+                <span className="font-display text-gold text-sm font-semibold">अ</span>
+              </div>
+              <h2 className="font-display text-lg font-bold tracking-wider text-cream">ACCESS RECOVERY</h2>
+              <p className="text-[10px] text-cream-ghost uppercase tracking-[0.2em] mt-1">Credentials Reset Manager</p>
+            </div>
+
+            {!resetKeySent ? (
+              <div className="space-y-4 text-center">
+                <p className="text-xs text-cream-ghost leading-relaxed">
+                  A verification key will be sent to the registered email (<span className="text-gold font-semibold">parthgelani08@gmail.com</span>) to recover your admin access.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleSendResetKey}
+                  disabled={loading}
+                  className="w-full bg-gold-gradient hover:bg-gold-gradient-hover text-stone-950 py-3 rounded-full text-xs font-bold tracking-wider transition-all duration-300 shadow-md shadow-gold/15 flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <div className="w-4 h-4 border-2 border-stone-950/30 border-t-stone-950 rounded-full animate-spin" />
+                  ) : (
+                    'Send Recovery Key'
+                  )}
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="text-xs text-cream-ghost leading-relaxed text-center pb-2">
+                  Please check your inbox at <span className="text-gold font-semibold">parthgelani08@gmail.com</span> for the recovery key.
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-cream-ghost mb-1">Verification Key</label>
+                  <input 
+                    type="text" 
+                    value={resetKey} 
+                    onChange={e => setResetKey(e.target.value)} 
+                    required 
+                    placeholder="Enter 6-digit key" 
+                    className="w-full bg-surface-2 border border-border-subtle rounded-xl p-3 text-xs text-cream focus:outline-none focus:border-gold/40 placeholder-cream-ghost text-center font-mono tracking-widest font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-cream-ghost mb-1">New Username</label>
+                  <input 
+                    type="text" 
+                    value={newUsername} 
+                    onChange={e => setNewUsername(e.target.value)} 
+                    required 
+                    placeholder="New admin username" 
+                    className="w-full bg-surface-2 border border-border-subtle rounded-xl p-3 text-xs text-cream focus:outline-none focus:border-gold/40 placeholder-cream-ghost"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-cream-ghost mb-1">New Password</label>
+                  <input 
+                    type="password" 
+                    value={newPassword} 
+                    onChange={e => setNewPassword(e.target.value)} 
+                    required 
+                    placeholder="New password" 
+                    className="w-full bg-surface-2 border border-border-subtle rounded-xl p-3 text-xs text-cream focus:outline-none focus:border-gold/40 placeholder-cream-ghost"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-gold-gradient hover:bg-gold-gradient-hover text-stone-950 py-3 rounded-full text-xs font-bold tracking-wider transition-all duration-300 shadow-md shadow-gold/15 flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <div className="w-4 h-4 border-2 border-stone-950/30 border-t-stone-950 rounded-full animate-spin" />
+                  ) : (
+                    'Verify & Reset Credentials'
+                  )}
+                </button>
+                <div className="text-center pt-2">
+                  <button
+                    type="button"
+                    onClick={handleSendResetKey}
+                    className="text-cream-ghost hover:text-gold transition-colors text-[10px] uppercase tracking-wider font-semibold"
+                  >
+                    Resend Code
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="border-t border-border-subtle pt-4 text-center">
+              <button
+                type="button"
+                onClick={() => { setLoginMode('login'); setResetKeySent(false); }}
+                className="text-cream-ghost hover:text-gold transition-colors text-[10px] uppercase tracking-wider font-semibold"
+              >
+                Back to Login
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     );
   }
