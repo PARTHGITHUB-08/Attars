@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import Home from './pages/Home';
 import Admin from './pages/Admin';
+import TrackOrder from './pages/TrackOrder';
 import Toast from './components/Toast';
 import CartSidebar from './components/CartSidebar';
 
@@ -24,6 +25,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/track-order" element={<TrackOrder />} />
       </Routes>
       <CartSidebar />
       <Toast />

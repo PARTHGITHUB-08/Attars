@@ -92,6 +92,28 @@ router.post('/', async (req, res, next) => {
   }
 });
 
+// GET /api/invoices/:id (Public tracking endpoint)
+router.get('/:id', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    let invoice;
+    if (mongoose.connection.readyState !== 1) {
+      invoice = localInvoices.find(inv => inv.invoiceId === id || inv._id === id);
+    } else {
+      invoice = await Invoice.findById(id);
+      if (!invoice) {
+        invoice = await Invoice.findOne({ invoiceId: id });
+      }
+    }
+    if (!invoice) {
+      return res.status(404).json({ success: false, message: 'Order/Invoice not found' });
+    }
+    res.json({ success: true, data: invoice });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // PUT /api/invoices/:id/mark-paid
 router.put('/:id/mark-paid', checkAdminKey, async (req, res, next) => {
   try {

@@ -404,16 +404,20 @@ export default function CartSidebar() {
                     
                     {placedOrder.paymentMethod === 'UPI' ? (
                       <>
-                        <p className="text-xs text-cream-ghost mb-6 max-w-[280px] mx-auto leading-relaxed">
-                          Scan the UPI QR code below to complete payment, then share the screenshot on WhatsApp.
+                        <p className="text-xs text-cream-ghost mb-6 max-w-[320px] mx-auto leading-relaxed">
+                          Your order message has been generated. Please click the button below to send this to us on WhatsApp. Our automated system will immediately send you the UPI QR code on WhatsApp to complete your payment.
                         </p>
 
-                        {/* UPI Scan & Pay Code */}
-                        <div className="mb-6 border border-gold/15 bg-surface-1 rounded-2xl p-4 text-center font-body w-full max-w-sm mx-auto shadow-md">
-                          <div className="text-[10px] font-semibold text-gold tracking-wider uppercase mb-2">Scan & Pay via UPI</div>
-                          <img src="/qr_code.png" alt="UPI QR Code" className="w-40 h-40 mx-auto object-contain border border-gold/10 rounded-lg p-1.5 bg-white" />
-                          <div className="text-[10px] text-cream-ghost mt-2 font-mono">UPI ID: parthgelani08-1@okaxis</div>
-                          <div className="text-[11px] font-bold text-cream mt-1.5">Amount Payable: ₹{placedOrder.total?.toFixed(2)}</div>
+                        {/* QR Code WhatsApp Delivery Status Box */}
+                        <div className="mb-6 border border-gold/15 bg-surface-1 rounded-2xl p-5 text-center font-body w-full max-w-sm mx-auto shadow-md space-y-2">
+                          <div className="text-[10px] font-semibold text-gold tracking-wider uppercase">UPI QR Code Delivery</div>
+                          <div className="text-cream text-xs leading-relaxed font-semibold">
+                            UPI QR Code will be sent on WhatsApp
+                          </div>
+                          <div className="text-[10px] text-cream-ghost font-mono">
+                            Sent automatically upon receiving your message.
+                          </div>
+                          <div className="text-[11px] font-bold text-cream">Amount Payable: ₹{placedOrder.total?.toFixed(2)}</div>
                         </div>
                       </>
                     ) : (
@@ -464,6 +468,20 @@ export default function CartSidebar() {
                         <div className="truncate">{placedOrder.customer.name}</div>
                         <div className="truncate">{placedOrder.customer.address}</div>
                       </div>
+                    </div>
+
+                    <div className="mt-5 p-4 border border-border-subtle bg-surface-1/40 rounded-2xl text-center max-w-sm w-full mx-auto shadow-sm">
+                      <p className="text-[11px] text-cream-ghost leading-normal">
+                        Track your order and check if your payment status is done or pending anytime:
+                      </p>
+                      <a
+                        href={`/track-order?id=${placedOrder.invoiceId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 block text-xs font-semibold text-gold hover:text-gold-light underline truncate font-mono"
+                      >
+                        Track Status: {placedOrder.invoiceId}
+                      </a>
                     </div>
 
                     <a
