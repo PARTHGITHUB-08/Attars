@@ -41,36 +41,69 @@ router.post('/', async (req, res, next) => {
 
     let savedInvoice;
     if (mongoose.connection.readyState !== 1) {
-      savedInvoice = {
-        _id: `mock-inv-${Date.now()}`,
-        invoiceId,
-        customer,
-        items,
-        subtotal,
-        discount,
-        cgst,
-        sgst,
-        grandTotal,
-        date,
-        paymentMethod: method,
-        paymentStatus: status,
-        createdAt: new Date()
-      };
-      localInvoices.unshift(savedInvoice);
+      const idx = localInvoices.findIndex(inv => inv.invoiceId === invoiceId);
+      if (idx !== -1) {
+        localInvoices[idx] = {
+          ...localInvoices[idx],
+          customer,
+          items,
+          subtotal,
+          discount,
+          cgst,
+          sgst,
+          grandTotal,
+          date,
+          paymentMethod: method,
+          paymentStatus: status
+        };
+        savedInvoice = localInvoices[idx];
+      } else {
+        savedInvoice = {
+          _id: `mock-inv-${Date.now()}`,
+          invoiceId,
+          customer,
+          items,
+          subtotal,
+          discount,
+          cgst,
+          sgst,
+          grandTotal,
+          date,
+          paymentMethod: method,
+          paymentStatus: status,
+          createdAt: new Date()
+        };
+        localInvoices.unshift(savedInvoice);
+      }
     } else {
-      savedInvoice = await Invoice.create({
-        invoiceId,
-        customer,
-        items,
-        subtotal,
-        discount,
-        cgst,
-        sgst,
-        grandTotal,
-        date,
-        paymentMethod: method,
-        paymentStatus: status
-      });
+      const existing = await Invoice.findOne({ invoiceId });
+      if (existing) {
+        existing.customer = customer;
+        existing.items = items;
+        existing.subtotal = subtotal;
+        existing.discount = discount;
+        existing.cgst = cgst;
+        existing.sgst = sgst;
+        existing.grandTotal = grandTotal;
+        existing.date = date;
+        existing.paymentMethod = method;
+        existing.paymentStatus = status;
+        savedInvoice = await existing.save();
+      } else {
+        savedInvoice = await Invoice.create({
+          invoiceId,
+          customer,
+          items,
+          subtotal,
+          discount,
+          cgst,
+          sgst,
+          grandTotal,
+          date,
+          paymentMethod: method,
+          paymentStatus: status
+        });
+      }
     }
 
     // Trigger automated email dispatch immediately ONLY for Cash or already Paid invoices
