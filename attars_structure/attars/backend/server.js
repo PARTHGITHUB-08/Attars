@@ -5,6 +5,8 @@ import { connectDB } from './config/db.js';
 import productRoutes from './routes/products.js';
 import testimonialRoutes from './routes/testimonials.js';
 import newsletterRoutes from './routes/newsletter.js';
+import invoiceRoutes from './routes/invoices.js';
+import adminRoutes from './routes/admin.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -24,10 +26,12 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/products', productRoutes);
 app.use('/api/testimonials', testimonialRoutes);
 app.use('/api/newsletter', newsletterRoutes);
+app.use('/api/invoices', invoiceRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Attars API is running' });
+  res.json({ status: 'ok', message: 'Attraz API is running' });
 });
 
 // Error handler
@@ -37,5 +41,5 @@ app.use((err, req, res, next) => {
 });
 
 connectDB().then(() => {
-  app.listen(PORT, () => console.log(`Attars server running on port ${PORT}`));
+  app.listen(PORT, () => console.log(`Attraz server running on port ${PORT}`));
 });

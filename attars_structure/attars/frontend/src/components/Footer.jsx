@@ -28,7 +28,7 @@ export default function Footer() {
                 <span className="font-display text-gold text-base font-semibold leading-none">अ</span>
               </div>
               <div className="flex flex-col">
-                <span className="font-display text-lg font-semibold text-cream tracking-wide leading-none">ATTARS</span>
+                <span className="font-display text-lg font-semibold text-cream tracking-wide leading-none">ATTRAZ</span>
                 <span className="text-[8px] tracking-[0.25em] uppercase text-gold/50 font-body leading-none mt-0.5">The Soul of Fragrance</span>
               </div>
             </div>
@@ -49,7 +49,7 @@ export default function Footer() {
               </div>
               <div className="flex items-center gap-2.5 text-[12px] text-cream-faint font-body">
                 <Mail className="w-3.5 h-3.5 text-gold/40 flex-shrink-0" />
-                <span>namaste@attars.in</span>
+                <span>namaste@attraz.in</span>
               </div>
             </div>
 
@@ -123,7 +123,7 @@ export default function Footer() {
         <div className="gold-line mb-6" />
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-[11px] text-cream-ghost font-body text-center sm:text-left">
-            © 2025 Attars. All rights reserved. Crafted with श्रद्धा in India.
+            © 2025 Attraz. All rights reserved. Crafted with श्रद्धा in India.
           </p>
           <div className="flex items-center gap-5">
             <span className="text-[11px] text-cream-ghost font-body flex items-center gap-1.5">

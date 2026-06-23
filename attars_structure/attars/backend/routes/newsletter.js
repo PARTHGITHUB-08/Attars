@@ -1,6 +1,7 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import Subscriber from '../models/Subscriber.js';
+import { sendWelcomeEmail, sendAdminNotificationEmail } from '../utils/mailer.js';
 
 const router = express.Router();
 const SECRET_KEY = 'attars-admin-2026';
@@ -39,6 +40,11 @@ router.post('/subscribe', async (req, res, next) => {
         subscribedAt: new Date(),
         active: true
       });
+
+      // Send welcome & notification emails asynchronously
+      sendWelcomeEmail(emailKey).catch(err => console.error('[Mailer Error]', err));
+      sendAdminNotificationEmail(emailKey).catch(err => console.error('[Mailer Error]', err));
+
       return res.status(201).json({ success: true, message: 'Welcome to the fragrance family! Check your email for 10% off.' });
     }
 
@@ -51,6 +57,12 @@ router.post('/subscribe', async (req, res, next) => {
     }
 
     await Subscriber.create({ email });
+
+    // Send welcome & notification emails asynchronously
+    const emailKey = email.trim().toLowerCase();
+    sendWelcomeEmail(emailKey).catch(err => console.error('[Mailer Error]', err));
+    sendAdminNotificationEmail(emailKey).catch(err => console.error('[Mailer Error]', err));
+
     res.status(201).json({ success: true, message: 'Welcome to the fragrance family! Check your email for 10% off.' });
   } catch (err) {
     if (err.code === 11000) return res.json({ success: true, message: 'You are already subscribed!' });

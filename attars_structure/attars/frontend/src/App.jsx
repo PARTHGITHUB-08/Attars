@@ -12,7 +12,6 @@ export default function App() {
     const handleKeyDown = (e) => {
       if (e.ctrlKey && (e.key === 'a' || e.key === 'A')) {
         e.preventDefault();
-        localStorage.setItem('attars_admin_key', 'attars-admin-2026');
         navigate('/admin');
       }
     };

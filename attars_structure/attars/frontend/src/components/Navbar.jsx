@@ -47,7 +47,7 @@ export default function Navbar() {
             </div>
             <div className="flex flex-col">
               <span className="font-display text-lg font-semibold text-cream tracking-wide leading-none">
-                ATTARS
+                ATTRAZ
               </span>
               <span className="text-[8px] tracking-[0.25em] uppercase text-gold/50 font-body leading-none mt-0.5">
                 The Soul of Fragrance

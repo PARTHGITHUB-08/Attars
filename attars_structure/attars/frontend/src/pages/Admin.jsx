@@ -14,6 +14,17 @@ export default function Admin() {
   const [activeTab, setActiveTab] = useState('products');
   const { showToast } = useToast();
 
+  // Authentication States
+  const [isAuthenticated, setIsAuthenticated] = useState(localStorage.getItem('attars_admin_authenticated') === 'true');
+  const [loginUser, setLoginUser] = useState('');
+  const [loginPass, setLoginPass] = useState('');
+  const [authError, setAuthError] = useState('');
+
+  // Security Form States
+  const [securityUsername, setSecurityUsername] = useState('');
+  const [securityPassword, setSecurityPassword] = useState('');
+  const [securityConfirmPassword, setSecurityConfirmPassword] = useState('');
+
   // Data States
   const [products, setProducts] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
@@ -21,7 +32,7 @@ export default function Admin() {
   const [loading, setLoading] = useState(false);
 
   // Billing States
-  const [billingInvoices, setBillingInvoices] = useState(JSON.parse(localStorage.getItem('attars_billing_invoices') || '[]'));
+  const [billingInvoices, setBillingInvoices] = useState([]);
   const [invoiceCustomer, setInvoiceCustomer] = useState({ name: '', contact: '', address: '', date: new Date().toISOString().split('T')[0], notes: '' });
   const [invoiceItems, setInvoiceItems] = useState([]);
   const [selectedProductId, setSelectedProductId] = useState('');
@@ -51,14 +62,82 @@ export default function Admin() {
     origin: ''
   });
 
-  // Load all records on component mount
+  // Load all records on component mount or authentication
   useEffect(() => {
-    loadAllData('attars-admin-2026');
-  }, []);
+    const key = localStorage.getItem('attars_admin_key') || secretKey;
+    if (isAuthenticated) {
+      loadAllData(key);
+      loadAdminUsername(key);
+    }
+  }, [isAuthenticated]);
 
   const handleLogout = () => {
+    localStorage.removeItem('attars_admin_authenticated');
+    localStorage.removeItem('attars_admin_key');
+    setIsAuthenticated(false);
     showToast('Exited Admin Panel');
     window.location.href = '/';
+  };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setAuthError('');
+    try {
+      const res = await api.post('/admin/login', { username: loginUser, password: loginPass });
+      if (res.success) {
+        localStorage.setItem('attars_admin_authenticated', 'true');
+        localStorage.setItem('attars_admin_key', res.secretKey);
+        setIsAuthenticated(true);
+        showToast('Access authenticated successfully', 'success');
+      }
+    } catch (err) {
+      setAuthError(err.response?.data?.message || 'Invalid credentials');
+      showToast('Authentication failed', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadAdminUsername = async (key) => {
+    try {
+      const res = await api.get('/admin/credentials', { headers: { 'x-admin-key': key } });
+      if (res.success) {
+        setSecurityUsername(res.username);
+      }
+    } catch (err) {
+      console.error('Error fetching admin username:', err);
+    }
+  };
+
+  const handleUpdateCredentials = async (e) => {
+    e.preventDefault();
+    if (!securityUsername || !securityPassword) {
+      showToast('Username and password are required', 'error');
+      return;
+    }
+    if (securityPassword !== securityConfirmPassword) {
+      showToast('Passwords do not match', 'error');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const key = localStorage.getItem('attars_admin_key') || secretKey;
+      const res = await api.put('/admin/credentials', 
+        { username: securityUsername, password: securityPassword },
+        { headers: { 'x-admin-key': key } }
+      );
+      if (res.success) {
+        showToast('Admin credentials updated successfully!', 'success');
+        setSecurityPassword('');
+        setSecurityConfirmPassword('');
+      }
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Error updating credentials', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const loadAllData = async (key = secretKey) => {
@@ -81,6 +160,10 @@ export default function Admin() {
       // Fetch Subscribers
       const subRes = await api.get('/newsletter/subscribers', headers);
       if (subRes.success) setSubscribers(subRes.data || []);
+
+      // Fetch Invoices
+      const invRes = await api.get('/invoices', headers);
+      if (invRes.success) setBillingInvoices(invRes.data || []);
 
     } catch (err) {
       showToast(err.message || 'Error fetching records', 'error');
@@ -309,7 +392,7 @@ export default function Admin() {
     setInvoiceId(`INV-2026-${Math.floor(1000 + Math.random() * 9000)}`);
   };
 
-  const handleGenerateInvoice = () => {
+  const handleGenerateInvoice = async () => {
     if (!invoiceCustomer.name) {
       showToast('Please enter customer name', 'error');
       return;
@@ -323,8 +406,8 @@ export default function Admin() {
     const subtotal = invoiceItems.reduce((sum, item) => sum + (item.price * item.qty), 0);
     const discountVal = Number(invoiceDiscount) || 0;
     const taxable = Math.max(0, subtotal - discountVal);
-    const cgst = taxable * 0.09;
-    const sgst = taxable * 0.09;
+    const cgst = Math.round(taxable * 0.09);
+    const sgst = Math.round(taxable * 0.09);
     const grandTotal = taxable + cgst + sgst;
 
     const newInvoice = {
@@ -339,24 +422,55 @@ export default function Admin() {
       date: invoiceCustomer.date || new Date().toLocaleDateString()
     };
 
-    const updatedInvoices = [newInvoice, ...billingInvoices];
-    setBillingInvoices(updatedInvoices);
-    localStorage.setItem('attars_billing_invoices', JSON.stringify(updatedInvoices));
+    setLoading(true);
+    try {
+      await api.post('/invoices', newInvoice);
+      showToast('Invoice generated successfully! Opening print dialog...', 'success');
+      handleClearInvoice();
+      loadAllData();
 
-    showToast('Invoice generated successfully! Opening print dialog...', 'success');
-
-    // Trigger printing
-    setTimeout(() => {
-      window.print();
-    }, 100);
+      // Trigger printing
+      setTimeout(() => {
+        window.print();
+      }, 100);
+    } catch (err) {
+      showToast(err.message || 'Error generating invoice', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDeleteInvoice = (id) => {
-    if (!window.confirm('Delete this invoice record from session history?')) return;
-    const updated = billingInvoices.filter(inv => inv.invoiceId !== id);
-    setBillingInvoices(updated);
-    localStorage.setItem('attars_billing_invoices', JSON.stringify(updated));
-    showToast('Invoice record deleted');
+  const handleMarkAsPaid = async (id) => {
+    if (!window.confirm('Verify payment and send final email to the customer?')) return;
+    setLoading(true);
+    try {
+      const key = localStorage.getItem('attars_admin_key') || secretKey;
+      await api.put(`/invoices/${id}/mark-paid`, {}, {
+        headers: { 'x-admin-key': key }
+      });
+      showToast('Payment verified and invoice email sent!', 'success');
+      loadAllData();
+    } catch (err) {
+      showToast(err.response?.data?.message || err.message || 'Error verifying payment', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteInvoice = async (id) => {
+    if (!window.confirm('Delete this invoice record from registry?')) return;
+    setLoading(true);
+    try {
+      await api.delete(`/invoices/${id}`, {
+        headers: { 'x-admin-key': localStorage.getItem('attars_admin_key') || secretKey }
+      });
+      showToast('Invoice record deleted');
+      loadAllData();
+    } catch (err) {
+      showToast(err.message || 'Error deleting invoice', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleLoadInvoiceToGenerator = (inv) => {
@@ -376,6 +490,69 @@ export default function Admin() {
 
 
   // Render Dashboard if Authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-surface-0 text-cream flex items-center justify-center p-5 font-body">
+        {/* Background elements */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-gold/[0.02] blur-[80px] pointer-events-none" />
+        
+        <form onSubmit={handleLogin} className="w-full max-w-sm border border-border-subtle bg-surface-1/40 p-8 rounded-2xl shadow-2xl relative space-y-6">
+          <div className="text-center pb-4 border-b border-border-subtle">
+            <div className="w-12 h-12 rounded-full border border-gold/30 flex items-center justify-center bg-gold-subtle mx-auto mb-3">
+              <span className="font-display text-gold text-lg font-bold">अ</span>
+            </div>
+            <h2 className="font-display text-lg font-bold tracking-wider text-cream">ATTRAZ ADMIN PORTAL</h2>
+            <p className="text-[10px] text-cream-ghost uppercase tracking-[0.2em] mt-1">Security Authenticator</p>
+          </div>
+
+          {authError && (
+            <div className="text-xs text-red-400 bg-red-950/20 border border-red-900/30 p-3 rounded-xl text-center">
+              {authError}
+            </div>
+          )}
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-[10px] uppercase font-bold text-cream-ghost mb-1">Username</label>
+              <input 
+                type="text" 
+                value={loginUser} 
+                onChange={e => setLoginUser(e.target.value)} 
+                required 
+                placeholder="Username" 
+                className="w-full bg-surface-2 border border-border-subtle rounded-xl p-3 text-xs text-cream focus:outline-none focus:border-gold/40 placeholder-cream-ghost"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] uppercase font-bold text-cream-ghost mb-1">Password</label>
+              <input 
+                type="password" 
+                value={loginPass} 
+                onChange={e => setLoginPass(e.target.value)} 
+                required 
+                placeholder="Password" 
+                className="w-full bg-surface-2 border border-border-subtle rounded-xl p-3 text-xs text-cream focus:outline-none focus:border-gold/40 placeholder-cream-ghost"
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-gold-gradient hover:bg-gold-gradient-hover text-stone-950 py-3 rounded-full text-xs font-bold tracking-wider transition-all duration-300 shadow-md shadow-gold/15 flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <div className="w-4 h-4 border-2 border-stone-950/30 border-t-stone-950 rounded-full animate-spin" />
+            ) : (
+              'Authenticate Access'
+            )}
+          </button>
+        </form>
+      </div>
+    );
+  }
+
+  // Render Dashboard if Authenticated
   return (
     <div className="min-h-screen bg-surface-0 text-cream pb-16 relative">
       {/* Header */}
@@ -385,7 +562,7 @@ export default function Admin() {
             <div className="w-8 h-8 rounded-full border border-gold/30 flex items-center justify-center bg-gold-subtle">
               <span className="font-display text-gold text-sm font-semibold">अ</span>
             </div>
-            <span className="font-display text-base font-semibold text-cream tracking-wide">ATTARS ADMIN</span>
+            <span className="font-display text-base font-semibold text-cream tracking-wide">ATTRAZ ADMIN</span>
           </Link>
 
           <div className="flex items-center gap-4">
@@ -445,7 +622,8 @@ export default function Admin() {
               { id: 'products', label: 'Products', icon: Package },
               { id: 'testimonials', label: 'Reviews', icon: MessageSquare },
               { id: 'subscribers', label: 'Subscribers', icon: Mail },
-              { id: 'billing', label: 'Invoice Generator', icon: FileText }
+              { id: 'billing', label: 'Invoice Generator', icon: FileText },
+              { id: 'security', label: 'Security Settings', icon: Shield }
             ].map(tab => (
               <button
                 key={tab.id}
@@ -463,7 +641,7 @@ export default function Admin() {
           </div>
 
           <div className="flex gap-3">
-            {activeTab !== 'billing' && (
+            {activeTab !== 'billing' && activeTab !== 'security' && (
               <button
                 onClick={() => handleExportCSV(activeTab)}
                 className="px-4 py-2.5 rounded-full border border-border-default bg-surface-1/30 hover:border-gold/30 hover:bg-gold-subtle text-xs font-body font-semibold tracking-wide flex items-center justify-center gap-2 transition-all"
@@ -966,14 +1144,14 @@ export default function Admin() {
                       <span className="font-display text-stone-900 text-xl font-bold leading-none">अ</span>
                     </div>
                     <div>
-                      <h1 className="font-display text-xl font-bold tracking-wider leading-none text-stone-900">ATTARS PERFUMES</h1>
+                      <h1 className="font-display text-xl font-bold tracking-wider leading-none text-stone-900">ATTRAZ PERFUMES</h1>
                       <span className="text-[9px] tracking-[0.25em] uppercase text-stone-500 font-semibold mt-1 block">The Soul of Pure Fragrance</span>
                     </div>
                   </div>
                   <div className="text-left sm:text-right text-[11px] text-stone-500 space-y-0.5 leading-tight">
-                    <div className="font-semibold text-stone-800">ATTARS DISTILLERY PRIVATE LTD</div>
+                    <div className="font-semibold text-stone-800">ATTRAZ DISTILLERY PRIVATE LTD</div>
                     <div>12, Royal Perfumers Row, Kannauj, UP, India</div>
-                    <div>contact@attars.in · www.attars.in</div>
+                    <div>contact@attraz.in · www.attraz.in</div>
                   </div>
                 </div>
 
@@ -1074,10 +1252,10 @@ export default function Admin() {
                 <div className="mt-12 pt-8 border-t border-stone-200 flex justify-between items-end text-[10px] text-stone-400">
                   <div>
                     <div>Verification Status: <span className="text-green-600 font-bold">APPROVED ONLINE</span></div>
-                    <div>Digital Trace ID: {invoiceId}-ATTAR</div>
+                    <div>Digital Trace ID: {invoiceId}-ATTRAZ</div>
                   </div>
                   <div className="text-right">
-                    <div className="w-32 border-b border-stone-300 pb-1 text-center font-display italic text-stone-600">Manoj Attarwala</div>
+                    <div className="w-32 border-b border-stone-300 pb-1 text-center font-display italic text-stone-600">Manoj Attarzwala</div>
                     <div className="mt-1">Authorized Signatory</div>
                   </div>
                 </div>
@@ -1106,9 +1284,29 @@ export default function Admin() {
                         <div>
                           <div className="font-display font-semibold text-cream">{inv.customer?.name || 'Walk-in'} ({inv.invoiceId})</div>
                           <div className="text-[10px] text-cream-ghost mt-0.5">{inv.date} · {inv.items?.length} Items</div>
+                          <div className="flex gap-1.5 mt-1">
+                            <span className="inline-block px-2 py-0.5 rounded bg-surface-2 border border-border-subtle text-[9px] uppercase font-bold text-cream-ghost">
+                              {inv.paymentMethod || 'UPI'}
+                            </span>
+                            <span className={`inline-block px-2 py-0.5 rounded text-[9px] uppercase font-bold ${
+                              (inv.paymentStatus || 'Pending') === 'Paid'
+                                ? 'bg-green-950/20 text-green-400 border border-green-900/30'
+                                : 'bg-gold-subtle text-gold border border-gold/15'
+                            }`}>
+                              {inv.paymentStatus || 'Pending'}
+                            </span>
+                          </div>
                         </div>
                         <div className="flex items-center gap-3">
                           <span className="font-semibold text-gold">₹{inv.grandTotal?.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
+                          {inv.paymentMethod === 'UPI' && inv.paymentStatus !== 'Paid' && (
+                            <button
+                              onClick={() => handleMarkAsPaid(inv._id || inv.invoiceId)}
+                              className="px-2.5 py-1 rounded bg-gold/10 hover:bg-gold/25 border border-gold/30 text-gold hover:text-white transition-all text-[10px] font-bold"
+                            >
+                              Verify Pay & Email
+                            </button>
+                          )}
                           <button
                             onClick={() => handleLoadInvoiceToGenerator(inv)}
                             className="p-1 rounded border border-border-subtle hover:border-gold/30 text-cream-ghost hover:text-gold transition-colors"
@@ -1132,6 +1330,59 @@ export default function Admin() {
 
             </div>
 
+          </div>
+        )}
+
+        {!loading && activeTab === 'security' && (
+          <div className="max-w-md mx-auto">
+            <form onSubmit={handleUpdateCredentials} className="border border-border-subtle bg-surface-1/40 p-6 sm:p-8 rounded-2xl shadow-2xl space-y-6">
+              <h3 className="font-display text-lg text-gold border-b border-border-subtle pb-2 font-semibold">Change Security Credentials</h3>
+              
+              <div className="space-y-4 font-body">
+                <div>
+                  <label className="block text-xs uppercase font-bold text-cream-ghost mb-2">Admin Username</label>
+                  <input 
+                    type="text" 
+                    value={securityUsername} 
+                    onChange={e => setSecurityUsername(e.target.value)} 
+                    required 
+                    placeholder="Username" 
+                    className="w-full bg-surface-2 border border-border-subtle rounded-xl p-3 text-sm text-cream focus:outline-none focus:border-gold/40 placeholder-cream-ghost"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs uppercase font-bold text-cream-ghost mb-2">New Password</label>
+                  <input 
+                    type="password" 
+                    value={securityPassword} 
+                    onChange={e => setSecurityPassword(e.target.value)} 
+                    required 
+                    placeholder="New password" 
+                    className="w-full bg-surface-2 border border-border-subtle rounded-xl p-3 text-sm text-cream focus:outline-none focus:border-gold/40 placeholder-cream-ghost"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs uppercase font-bold text-cream-ghost mb-2">Confirm New Password</label>
+                  <input 
+                    type="password" 
+                    value={securityConfirmPassword} 
+                    onChange={e => setSecurityConfirmPassword(e.target.value)} 
+                    required 
+                    placeholder="Confirm new password" 
+                    className="w-full bg-surface-2 border border-border-subtle rounded-xl p-3 text-sm text-cream focus:outline-none focus:border-gold/40 placeholder-cream-ghost"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <button
+                  type="submit"
+                  className="bg-gold-gradient hover:bg-gold-gradient-hover text-stone-950 px-8 py-3 rounded-full text-xs font-bold tracking-wider transition-all duration-300 shadow-md shadow-gold/15"
+                >
+                  Update Credentials
+                </button>
+              </div>
+            </form>
           </div>
         )}
       </main>

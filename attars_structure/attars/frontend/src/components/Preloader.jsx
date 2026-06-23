@@ -38,7 +38,7 @@ export default function Preloader() {
           className="space-y-1.5"
         >
           <h1 className="font-display text-2xl font-semibold tracking-[0.25em] text-cream">
-            ATTARS
+            ATTRAZ
           </h1>
           <p className="text-[9px] tracking-[0.35em] uppercase text-gold font-body font-medium opacity-80">
             The Soul of Fragrance

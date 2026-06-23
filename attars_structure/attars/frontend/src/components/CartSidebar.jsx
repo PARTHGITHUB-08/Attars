@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus, Minus, Trash2, ShoppingBag, CreditCard, Sparkles, CheckCircle2 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import api from '../api/axios';
 
 export default function CartSidebar() {
   const { cartOpen, setCartOpen, items, updateQuantity, removeItem, total, count, clearCart } = useCart();
   const [checkoutStep, setCheckoutStep] = useState('cart'); // 'cart', 'details', 'success'
   const [customer, setCustomer] = useState({ name: '', contact: '', address: '' });
   const [placedOrder, setPlacedOrder] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState('UPI'); // 'UPI' or 'Cash'
 
   if (!cartOpen) return null;
 
@@ -23,22 +25,68 @@ export default function CartSidebar() {
     updateQuantity(id, newQty);
   };
 
-  const handleCheckoutSubmit = (e) => {
+  const handleCheckoutSubmit = async (e) => {
     e.preventDefault();
     if (!customer.name || !customer.contact || !customer.address) return;
     
-    // Simulate placing order
+    const phoneNumber = '919313319897';
+    const orderId = `ORD-${Date.now().toString().slice(-6).toUpperCase()}`;
+    const date = new Date().toLocaleDateString();
+
+    let message = `Hello Attraz Perfumes, I would like to place an order:\n`;
+    message += `*Order ID:* ${orderId}\n`;
+    message += `*Date:* ${date}\n\n`;
+    message += `*Customer Details:*\n`;
+    message += `- Name: ${customer.name}\n`;
+    message += `- Contact: ${customer.contact}\n`;
+    message += `- Shipping Address: ${customer.address}\n\n`;
+    message += `*Payment Method:* ${paymentMethod === 'UPI' ? 'UPI (Scan & Pay)' : 'Cash on Delivery'}\n\n`;
+    message += `*Items Ordered:*\n`;
+    items.forEach(item => {
+      message += `- ${item.name} (${item.volume}) x ${item.qty} - ₹${(item.price * item.qty).toLocaleString('en-IN')}\n`;
+    });
+    message += `\n*Total Payable Amount:* ₹${total.toLocaleString('en-IN')}\n\n`;
+    
+    if (paymentMethod === 'UPI') {
+      message += `Please provide the invoice and the QR code for payment. Thank you!`;
+    } else {
+      message += `Payment will be done in cash on delivery. Thank you!`;
+    }
+
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+
     const orderDetails = {
-      orderId: `ORD-${Date.now().toString().slice(-6).toUpperCase()}`,
-      date: new Date().toLocaleDateString(),
+      invoiceId: orderId,
+      date,
       items: [...items],
-      total: total,
-      customer: { ...customer }
+      subtotal: total,
+      discount: 0,
+      cgst: Math.round(total * 0.09),
+      sgst: Math.round(total * 0.09),
+      grandTotal: total,
+      customer: { ...customer, date },
+      paymentMethod,
+      paymentStatus: 'Pending'
     };
     
-    setPlacedOrder(orderDetails);
+    // Save invoice to backend database
+    try {
+      await api.post('/invoices', orderDetails);
+    } catch (err) {
+      console.error('[API Error] Failed to store checkout invoice on backend:', err);
+    }
+
+    setPlacedOrder({ ...orderDetails, whatsappUrl, total, paymentMethod });
     setCheckoutStep('success');
     clearCart();
+
+    // Attempt to redirect to WhatsApp
+    try {
+      window.open(whatsappUrl, '_blank');
+    } catch (err) {
+      console.error('Failed to open WhatsApp automatically', err);
+    }
   };
 
   return (
@@ -191,6 +239,44 @@ export default function CartSidebar() {
                       />
                     </div>
 
+                    <div className="space-y-2">
+                      <label className="block text-xs font-semibold uppercase text-cream-muted tracking-wider mb-2">Payment Method *</label>
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <label className="flex-1 flex items-center justify-between p-3.5 rounded-xl border border-border-subtle bg-surface-2 hover:border-gold/30 transition-all cursor-pointer select-none">
+                          <div className="flex items-center gap-2.5">
+                            <input
+                              type="radio"
+                              name="paymentMethod"
+                              value="UPI"
+                              checked={paymentMethod === 'UPI'}
+                              onChange={() => setPaymentMethod('UPI')}
+                              className="accent-gold w-4 h-4"
+                            />
+                            <div className="text-left">
+                              <span className="block text-xs font-semibold text-cream">UPI (Scan & Pay)</span>
+                              <span className="block text-[10px] text-cream-ghost mt-0.5">Scan UPI QR code</span>
+                            </div>
+                          </div>
+                        </label>
+                        <label className="flex-1 flex items-center justify-between p-3.5 rounded-xl border border-border-subtle bg-surface-2 hover:border-gold/30 transition-all cursor-pointer select-none">
+                          <div className="flex items-center gap-2.5">
+                            <input
+                              type="radio"
+                              name="paymentMethod"
+                              value="Cash"
+                              checked={paymentMethod === 'Cash'}
+                              onChange={() => setPaymentMethod('Cash')}
+                              className="accent-gold w-4 h-4"
+                            />
+                            <div className="text-left">
+                              <span className="block text-xs font-semibold text-cream">Cash on Delivery</span>
+                              <span className="block text-[10px] text-cream-ghost mt-0.5">Pay in cash on delivery</span>
+                            </div>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+
                     <div className="pt-4 border-t border-border-subtle">
                       <div className="flex justify-between items-center text-sm font-semibold mb-2">
                         <span className="text-cream-muted">Total Payable:</span>
@@ -204,15 +290,47 @@ export default function CartSidebar() {
                 )}
 
                 {checkoutStep === 'success' && placedOrder && (
-                  <div className="text-center py-6">
+                  <div className="text-center py-6 flex flex-col items-center">
                     <div className="w-12 h-12 rounded-full bg-gold-subtle border border-gold/25 flex items-center justify-center mx-auto mb-4">
                       <CheckCircle2 className="w-6 h-6 text-gold animate-bounce" />
                     </div>
-                    <h3 className="font-display text-xl text-cream font-semibold mb-1">Prasad Placed Successfully!</h3>
-                    <p className="text-xs text-cream-ghost mb-6">Your order has been recorded in the royal registry.</p>
+                    <h3 className="font-display text-xl text-cream font-semibold mb-1">Order Placed Successfully!</h3>
+                    
+                    {placedOrder.paymentMethod === 'UPI' ? (
+                      <>
+                        <p className="text-xs text-cream-ghost mb-6 max-w-[280px] mx-auto leading-relaxed">
+                          Scan the UPI QR code below to complete payment, then share the screenshot on WhatsApp.
+                        </p>
+
+                        {/* UPI Scan & Pay Code */}
+                        <div className="mb-6 border border-gold/15 bg-surface-1 rounded-2xl p-4 text-center font-body w-full max-w-sm mx-auto shadow-md">
+                          <div className="text-[10px] font-semibold text-gold tracking-wider uppercase mb-2">Scan & Pay via UPI</div>
+                          <img src="/qr_code.png" alt="UPI QR Code" className="w-40 h-40 mx-auto object-contain border border-gold/10 rounded-lg p-1.5 bg-white" />
+                          <div className="text-[10px] text-cream-ghost mt-2 font-mono">UPI ID: parthgelani08-1@okaxis</div>
+                          <div className="text-[11px] font-bold text-cream mt-1.5">Amount Payable: ₹{placedOrder.total?.toLocaleString('en-IN')}</div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-xs text-cream-ghost mb-6 max-w-[280px] mx-auto leading-relaxed">
+                          Your Cash on Delivery order details are summary verified below.
+                        </p>
+
+                        {/* COD Pending Box */}
+                        <div className="mb-6 border border-gold/15 bg-surface-1 rounded-2xl p-5 text-center font-body w-full max-w-sm mx-auto shadow-md">
+                          <div className="text-[10px] font-semibold text-gold tracking-wider uppercase mb-2">Payment Pending (Cash)</div>
+                          <div className="text-cream text-xs leading-relaxed font-semibold">
+                            Total Payable: ₹{placedOrder.total?.toLocaleString('en-IN')}
+                          </div>
+                          <div className="text-[10px] text-cream-ghost mt-1.5">
+                            Please prepare cash to pay when the package is delivered to you.
+                          </div>
+                        </div>
+                      </>
+                    )}
                     
                     {/* Invoice visual summary */}
-                    <div className="border border-gold/15 bg-surface-1 rounded-2xl p-5 text-left font-body text-xs space-y-4 max-w-sm mx-auto shadow-md">
+                    <div className="border border-gold/15 bg-surface-1 rounded-2xl p-5 text-left font-body text-xs space-y-4 w-full max-w-sm mx-auto shadow-md">
                       <div className="flex justify-between border-b border-border-subtle pb-2">
                         <div>
                           <span className="font-semibold text-cream">Invoice No:</span>
@@ -231,7 +349,7 @@ export default function CartSidebar() {
                       </div>
 
                       <div className="border-t border-border-subtle pt-3 flex justify-between font-semibold text-cream">
-                        <span>Paid Total (COD):</span>
+                        <span>Order Total:</span>
                         <span className="text-gold font-display text-sm">₹{placedOrder.total.toLocaleString('en-IN')}</span>
                       </div>
 
@@ -242,9 +360,21 @@ export default function CartSidebar() {
                       </div>
                     </div>
 
+                    <a
+                      href={placedOrder.whatsappUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-6 w-full max-w-sm bg-green-600 hover:bg-green-700 text-white py-3 rounded-full text-xs font-bold tracking-wider flex items-center justify-center gap-2 transition-all duration-300 shadow-lg shadow-green-950/20"
+                    >
+                      <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                        <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.458L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.37 9.864-9.799.002-2.63-1.023-5.101-2.885-6.966C16.59 1.974 14.113 1.9 12.01 1.9c-5.44 0-9.866 4.372-9.87 9.802 0 1.714.47 3.393 1.357 4.869l-.993 3.629 3.753-.974zm11.233-6.84c-.29-.145-1.71-.843-1.974-.939-.264-.096-.456-.145-.648.145-.191.29-.74.939-.907 1.13-.167.191-.334.215-.624.07-.29-.145-1.223-.45-2.33-1.439-.86-.767-1.44-1.716-1.608-2.005-.167-.29-.018-.446.126-.59.13-.13.29-.338.435-.507.145-.167.192-.29.29-.482.097-.191.048-.36-.024-.505-.072-.145-.648-1.56-.888-2.137-.233-.564-.49-.487-.648-.495-.167-.008-.36-.008-.552-.008-.192 0-.505.072-.77.36-.264.29-1.01 0-1.01 2.457s1.777 4.82 2.023 5.157c.246.337 3.5 5.348 8.48 7.495 1.185.51 2.11.815 2.83 1.042 1.19.378 2.274.325 3.13.197.955-.143 1.974-.805 2.25-1.543.277-.738.277-1.37.193-1.505-.084-.135-.29-.215-.58-.36z" />
+                      </svg>
+                      Open WhatsApp to Complete Order
+                    </a>
+
                     <button
                       onClick={handleClose}
-                      className="mt-8 bg-gold-gradient hover:bg-gold-gradient-hover text-stone-950 px-8 py-3 rounded-full text-xs font-semibold tracking-wider transition-all duration-300 shadow-md shadow-gold/15"
+                      className="mt-4 bg-surface-2 border border-border-subtle hover:border-gold/30 text-cream-muted px-8 py-3 rounded-full text-xs font-semibold tracking-wider transition-all duration-300"
                     >
                       Back to Shop
                     </button>
@@ -298,7 +428,7 @@ export default function CartSidebar() {
                     disabled={!customer.name || !customer.contact || !customer.address}
                     className="flex-2 bg-gold-gradient hover:bg-gold-gradient-hover text-stone-950 px-8 py-3 rounded-full text-xs font-bold tracking-wider transition-all duration-300 shadow-md shadow-gold/15 disabled:opacity-50"
                   >
-                    Place Cash on Delivery Order
+                    Confirm & Order via WhatsApp
                   </button>
                 </div>
               )}
