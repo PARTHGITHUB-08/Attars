@@ -14,7 +14,7 @@ router.get('/', async (req, res, next) => {
     if (mongoose.connection.readyState !== 1) {
       // In-memory fallback
       const { category, featured, sort, search, page = 1, limit = 12 } = req.query;
-      let data = mockProducts.map((p, index) => ({ ...p, _id: p._id || `mock-prod-${index + 1}` }));
+      let data = mockProducts.map((p, index) => ({ ...p, _id: p._id || `mock-prod-${index + 1}`, price: 0.1, originalPrice: p.originalPrice ? 0.1 : undefined }));
 
       // Filter out products without images for storefront queries
       if (!isAdmin) {
@@ -78,11 +78,17 @@ router.get('/', async (req, res, next) => {
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const products = await Product.find(filter).sort(sortOption).skip(skip).limit(parseInt(limit));
+    const formattedProducts = products.map(p => {
+      const pObj = p.toObject ? p.toObject() : p;
+      pObj.price = 0.1;
+      if (pObj.originalPrice) pObj.originalPrice = 0.1;
+      return pObj;
+    });
     const total = await Product.countDocuments(filter);
 
     res.json({
       success: true,
-      data: products,
+      data: formattedProducts,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
@@ -109,13 +115,16 @@ router.get('/categories', async (req, res, next) => {
 router.get('/:id', async (req, res, next) => {
   try {
     if (mongoose.connection.readyState !== 1) {
-      const mapped = mockProducts.map((p, i) => ({ ...p, _id: p._id || `mock-prod-${i + 1}` }));
+      const mapped = mockProducts.map((p, i) => ({ ...p, _id: p._id || `mock-prod-${i + 1}`, price: 0.1, originalPrice: p.originalPrice ? 0.1 : undefined }));
       const product = mapped.find(p => p._id === req.params.id || p.name.replace(/\s+/g, '-').toLowerCase() === req.params.id) || mapped[0];
       return res.json({ success: true, data: product });
     }
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
-    res.json({ success: true, data: product });
+    const pObj = product.toObject();
+    pObj.price = 0.1;
+    if (pObj.originalPrice) pObj.originalPrice = 0.1;
+    res.json({ success: true, data: pObj });
   } catch (err) { next(err); }
 });
 

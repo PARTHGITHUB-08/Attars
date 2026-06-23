@@ -26,7 +26,7 @@ export default function CartSidebar() {
   };
 
   const handleCheckoutSubmit = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     if (!customer.name || !customer.contact || !customer.address) return;
     
     const phoneNumber = '919313319897';
@@ -43,9 +43,10 @@ export default function CartSidebar() {
     message += `*Payment Method:* ${paymentMethod === 'UPI' ? 'UPI (Scan & Pay)' : 'Cash on Delivery'}\n\n`;
     message += `*Items Ordered:*\n`;
     items.forEach(item => {
-      message += `- ${item.name} (${item.volume}) x ${item.qty} - ₹${(item.price * item.qty).toLocaleString('en-IN')}\n`;
+      message += `- ${item.name} (${item.volume}) x ${item.qty} - ₹${(item.price * item.qty).toFixed(2)}\n`;
     });
-    message += `\n*Total Payable Amount:* ₹${total.toLocaleString('en-IN')}\n\n`;
+    message += `\n*Delivery Charge:* ₹50.00 (FREE)\n`;
+    message += `*Total Payable Amount:* ₹${total.toFixed(2)}\n\n`;
     
     if (paymentMethod === 'UPI') {
       message += `Please provide the invoice and the QR code for payment. Thank you!`;
@@ -62,8 +63,8 @@ export default function CartSidebar() {
       items: [...items],
       subtotal: total,
       discount: 0,
-      cgst: Math.round(total * 0.09),
-      sgst: Math.round(total * 0.09),
+      cgst: Number((total * 0.09).toFixed(2)),
+      sgst: Number((total * 0.09).toFixed(2)),
       grandTotal: total,
       customer: { ...customer, date },
       paymentMethod,
@@ -120,6 +121,7 @@ export default function CartSidebar() {
                   <h2 className="font-display text-lg font-semibold text-cream">
                     {checkoutStep === 'cart' && 'Your Fragrance Bag'}
                     {checkoutStep === 'details' && 'Delivery Details'}
+                    {checkoutStep === 'verify' && 'Order Verification'}
                     {checkoutStep === 'success' && 'Order Authenticated'}
                   </h2>
                 </div>
@@ -165,7 +167,7 @@ export default function CartSidebar() {
                               <div>
                                 <div className="flex items-start justify-between gap-2">
                                   <h4 className="font-display text-sm font-semibold text-cream truncate">{item.name}</h4>
-                                  <span className="text-sm font-display font-semibold text-gold">₹{(item.price * item.qty).toLocaleString('en-IN')}</span>
+                                  <span className="text-sm font-display font-semibold text-gold">₹{(item.price * item.qty).toFixed(2)}</span>
                                 </div>
                                 <p className="text-[10px] text-cream-ghost uppercase tracking-wider mt-0.5">{item.volume} · {item.nameHindi}</p>
                               </div>
@@ -204,7 +206,7 @@ export default function CartSidebar() {
                 )}
 
                 {checkoutStep === 'details' && (
-                  <form onSubmit={handleCheckoutSubmit} className="space-y-5">
+                  <form onSubmit={(e) => { e.preventDefault(); setCheckoutStep('verify'); }} className="space-y-5">
                     <div>
                       <label className="block text-xs font-semibold uppercase text-cream-muted tracking-wider mb-2">Recipient Full Name *</label>
                       <input
@@ -280,13 +282,67 @@ export default function CartSidebar() {
                     <div className="pt-4 border-t border-border-subtle">
                       <div className="flex justify-between items-center text-sm font-semibold mb-2">
                         <span className="text-cream-muted">Total Payable:</span>
-                        <span className="text-gold font-display text-base">₹{total.toLocaleString('en-IN')}</span>
+                        <span className="text-gold font-display text-base">₹{total.toFixed(2)}</span>
                       </div>
                       <p className="text-[10px] text-cream-ghost leading-relaxed">
                         By placing this order, you authorize packaging of natural raw oils with traditional applicator fittings. Free standard dispatch across India.
                       </p>
                     </div>
                   </form>
+                )}
+
+                {checkoutStep === 'verify' && (
+                  <div className="space-y-6">
+                    {/* Delivery Summary Panel */}
+                    <div className="border border-border-subtle bg-surface-1/40 p-5 rounded-2xl shadow-lg space-y-3">
+                      <h3 className="text-xs uppercase font-bold text-gold tracking-wider">Delivery Destination</h3>
+                      <div className="text-xs space-y-1.5 font-body text-cream-muted">
+                        <div><span className="font-semibold text-cream">Name:</span> {customer.name}</div>
+                        <div><span className="font-semibold text-cream">Contact:</span> {customer.contact}</div>
+                        <div><span className="font-semibold text-cream">Address:</span> {customer.address}</div>
+                        <div><span className="font-semibold text-cream">Payment Mode:</span> {paymentMethod === 'UPI' ? 'UPI (Scan & Pay)' : 'Cash on Delivery'}</div>
+                      </div>
+                    </div>
+
+                    {/* Products Summary Panel */}
+                    <div className="border border-border-subtle bg-surface-1/40 p-5 rounded-2xl shadow-lg space-y-3">
+                      <h3 className="text-xs uppercase font-bold text-gold tracking-wider">Verify Products</h3>
+                      <div className="divide-y divide-border-subtle/50">
+                        {items.map(item => (
+                          <div key={item._id} className="py-2.5 flex justify-between items-center text-xs">
+                            <div>
+                              <div className="font-semibold text-cream">{item.name}</div>
+                              <div className="text-[10px] text-cream-ghost mt-0.5">{item.volume} · Qty: {item.qty}</div>
+                            </div>
+                            <span className="font-semibold text-gold">₹{(item.price * item.qty).toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Pricing Breakdown Panel */}
+                    <div className="border border-border-subtle bg-surface-1/40 p-5 rounded-2xl shadow-lg space-y-2.5">
+                      <h3 className="text-xs uppercase font-bold text-gold tracking-wider">Verify Amount</h3>
+                      <div className="text-xs space-y-1.5 font-body">
+                        <div className="flex justify-between text-cream-muted font-body">
+                          <span>Items Subtotal:</span>
+                          <span>₹{total.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-cream-muted font-body">
+                          <span>Delivery Charge:</span>
+                          <span>₹50.00</span>
+                        </div>
+                        <div className="flex justify-between text-gold font-semibold font-body">
+                          <span>Delivery Fee Discount:</span>
+                          <span>-₹50.00 (Free Delivery)</span>
+                        </div>
+                        <div className="flex justify-between border-t border-border-subtle/50 pt-2 font-bold text-cream font-body">
+                          <span>Total Amount Payable:</span>
+                          <span className="text-gold font-display text-sm font-body">₹{total.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 )}
 
                 {checkoutStep === 'success' && placedOrder && (
@@ -307,7 +363,7 @@ export default function CartSidebar() {
                           <div className="text-[10px] font-semibold text-gold tracking-wider uppercase mb-2">Scan & Pay via UPI</div>
                           <img src="/qr_code.png" alt="UPI QR Code" className="w-40 h-40 mx-auto object-contain border border-gold/10 rounded-lg p-1.5 bg-white" />
                           <div className="text-[10px] text-cream-ghost mt-2 font-mono">UPI ID: parthgelani08-1@okaxis</div>
-                          <div className="text-[11px] font-bold text-cream mt-1.5">Amount Payable: ₹{placedOrder.total?.toLocaleString('en-IN')}</div>
+                          <div className="text-[11px] font-bold text-cream mt-1.5">Amount Payable: ₹{placedOrder.total?.toFixed(2)}</div>
                         </div>
                       </>
                     ) : (
@@ -320,7 +376,7 @@ export default function CartSidebar() {
                         <div className="mb-6 border border-gold/15 bg-surface-1 rounded-2xl p-5 text-center font-body w-full max-w-sm mx-auto shadow-md">
                           <div className="text-[10px] font-semibold text-gold tracking-wider uppercase mb-2">Payment Pending (Cash)</div>
                           <div className="text-cream text-xs leading-relaxed font-semibold">
-                            Total Payable: ₹{placedOrder.total?.toLocaleString('en-IN')}
+                            Total Payable: ₹{placedOrder.total?.toFixed(2)}
                           </div>
                           <div className="text-[10px] text-cream-ghost mt-1.5">
                             Please prepare cash to pay when the package is delivered to you.
@@ -343,14 +399,14 @@ export default function CartSidebar() {
                         {placedOrder.items.map(it => (
                           <div key={it._id} className="flex justify-between text-cream-muted">
                             <span className="truncate max-w-[200px]">{it.name} (x{it.qty})</span>
-                            <span>₹{(it.price * it.qty).toLocaleString('en-IN')}</span>
+                            <span>₹{(it.price * it.qty).toFixed(2)}</span>
                           </div>
                         ))}
                       </div>
 
                       <div className="border-t border-border-subtle pt-3 flex justify-between font-semibold text-cream">
                         <span>Order Total:</span>
-                        <span className="text-gold font-display text-sm">₹{placedOrder.total.toLocaleString('en-IN')}</span>
+                        <span className="text-gold font-display text-sm">₹{placedOrder.total.toFixed(2)}</span>
                       </div>
 
                       <div className="border-t border-border-subtle/50 pt-2 text-[10px] text-cream-ghost">
@@ -388,7 +444,7 @@ export default function CartSidebar() {
                   <div className="space-y-2 text-xs">
                     <div className="flex justify-between text-cream-muted">
                       <span>Subtotal</span>
-                      <span className="font-semibold text-cream">₹{total.toLocaleString('en-IN')}</span>
+                      <span className="font-semibold text-cream">₹{total.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-cream-muted">
                       <span>Traditional Wrapping</span>
@@ -400,7 +456,7 @@ export default function CartSidebar() {
                     </div>
                     <div className="flex justify-between border-t border-border-subtle pt-3 text-sm font-semibold text-cream">
                       <span>Total Value</span>
-                      <span className="text-gold font-display text-base">₹{total.toLocaleString('en-IN')}</span>
+                      <span className="text-gold font-display text-base">₹{total.toFixed(2)}</span>
                     </div>
                   </div>
 
@@ -424,11 +480,29 @@ export default function CartSidebar() {
                     Back to Bag
                   </button>
                   <button
-                    onClick={handleCheckoutSubmit}
+                    onClick={() => setCheckoutStep('verify')}
                     disabled={!customer.name || !customer.contact || !customer.address}
                     className="flex-2 bg-gold-gradient hover:bg-gold-gradient-hover text-stone-950 px-8 py-3 rounded-full text-xs font-bold tracking-wider transition-all duration-300 shadow-md shadow-gold/15 disabled:opacity-50"
                   >
-                    Confirm & Order via WhatsApp
+                    Continue to Verify
+                  </button>
+                </div>
+              )}
+
+              {checkoutStep === 'verify' && (
+                <div className="p-6 border-t border-border-subtle bg-surface-1/35 backdrop-blur-md flex gap-3">
+                  <button
+                    onClick={() => setCheckoutStep('details')}
+                    type="button"
+                    className="flex-1 border border-border-default hover:bg-surface-2 py-3 rounded-full text-xs font-semibold tracking-wider text-cream-muted transition-all"
+                  >
+                    Back to Details
+                  </button>
+                  <button
+                    onClick={handleCheckoutSubmit}
+                    className="flex-2 bg-gold-gradient hover:bg-gold-gradient-hover text-stone-950 px-8 py-3 rounded-full text-xs font-bold tracking-wider transition-all duration-300 shadow-md shadow-gold/15"
+                  >
+                    Confirm & Place Order
                   </button>
                 </div>
               )}

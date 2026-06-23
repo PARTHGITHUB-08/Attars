@@ -18,7 +18,7 @@ const fallbackProducts = [
     _id: '1', name: 'Mitti Attar', nameHindi: 'मिट्टी अत्तर',
     subtitle: 'The Scent of First Rain on Earth',
     description: 'Capturing the quintessential Indian monsoon experience.',
-    price: 2400, category: 'floral', badge: 'Bestseller',
+    price: 0.1, category: 'floral', badge: 'Bestseller',
     notes: { top: ['Wet Earth'], base: ['Sandalwood'] },
     volume: '12ml', image: '/images/mitti_attar.jpg',
     colorSwatch: '#8B6914', rating: 4.9, reviewCount: 287
@@ -27,7 +27,7 @@ const fallbackProducts = [
     _id: '2', name: 'Gulab Attar', nameHindi: 'गुलाब अत्तर',
     subtitle: 'Premium Damask Rose — The Original',
     description: 'A honeyed, velvety rose harvested at dawn.',
-    price: 3200, category: 'floral', badge: 'Classic',
+    price: 0.1, category: 'floral', badge: 'Classic',
     notes: { top: ['Fresh Rose'], base: ['Sandalwood'] },
     volume: '12ml', image: 'https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?w=800&h=1000&fit=crop',
     colorSwatch: '#9B2335', rating: 4.8, reviewCount: 412
@@ -36,7 +36,7 @@ const fallbackProducts = [
     _id: '3', name: 'Chandan Attar', nameHindi: 'चंदन अत्तर',
     subtitle: 'Mysore Sandalwood — Sacred & Meditative',
     description: 'Sourced from government-regulated plantations in Mysore.',
-    price: 4800, category: 'woody',
+    price: 0.1, category: 'woody',
     notes: { top: ['Creamy Wood'], base: ['Musk'] },
     volume: '12ml', image: '/images/chandan_attar.jpg',
     colorSwatch: '#C4A35A', rating: 4.9, reviewCount: 198
@@ -45,7 +45,7 @@ const fallbackProducts = [
     _id: '4', name: 'Oudh Attar', nameHindi: 'उद अत्तर',
     subtitle: 'Assamese Agarwood — Liquid Gold',
     description: 'Wild-harvested agarwood from ancient forests of Assam.',
-    price: 8500, category: 'woody', badge: 'Premium',
+    price: 0.1, category: 'woody', badge: 'Premium',
     notes: { top: ['Smoke', 'Leather'], base: ['Amber'] },
     volume: '12ml', image: 'https://images.unsplash.com/photo-1541643600914-78b084683601?w=800&h=1000&fit=crop',
     colorSwatch: '#5C4033', rating: 4.7, reviewCount: 134
@@ -54,7 +54,7 @@ const fallbackProducts = [
     _id: '5', name: 'Bela Attar', nameHindi: 'बेला अत्तर',
     subtitle: 'Night-Blooming Jasmine — Intoxicating',
     description: 'In the quiet hours after midnight, Jasmine sambac releases its most potent fragrance.',
-    price: 2800, category: 'floral',
+    price: 0.1, category: 'floral',
     notes: { top: ['Green Bud'], base: ['Vanilla'] },
     volume: '12ml', image: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=800&h=1000&fit=crop',
     colorSwatch: '#E8E0D0', rating: 4.8, reviewCount: 176
@@ -63,7 +63,7 @@ const fallbackProducts = [
     _id: '6', name: 'Kesar Attar', nameHindi: 'केसर अत्तर',
     subtitle: "Kashmiri Saffron — The Emperor's Choice",
     description: 'Made with Grade-1 Kashmiri Mongra saffron.',
-    price: 12000, originalPrice: 15000, category: 'rare', badge: 'Rare',
+    price: 0.1, originalPrice: 0.1, category: 'rare', badge: 'Rare',
     notes: { top: ['Honey'], base: ['Leather'] },
     volume: '12ml', image: 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=800&h=1000&fit=crop',
     colorSwatch: '#CC5500', rating: 5.0, reviewCount: 89
@@ -72,7 +72,7 @@ const fallbackProducts = [
     _id: '7', name: 'Shamama Attar', nameHindi: 'शमामा अत्तर',
     subtitle: 'The Complex Masterpiece — 60+ Ingredients',
     description: 'A symphony of over 60 natural ingredients.',
-    price: 15000, category: 'rare', badge: 'Limited',
+    price: 0.1, category: 'rare', badge: 'Limited',
     notes: { top: ['Saffron', 'Cardamom'], base: ['Amber', 'Musk'] },
     volume: '12ml', image: '/images/shamama_attar.jpg',
     colorSwatch: '#6B4423', rating: 5.0, reviewCount: 47
@@ -81,7 +81,7 @@ const fallbackProducts = [
     _id: '8', name: 'Hina Attar', nameHindi: 'हिना अत्तर',
     subtitle: 'Mehndi Flowers — Warm & Spiced Floral',
     description: 'Distilled from the tiny flowers of the henna plant.',
-    price: 3600, category: 'spicy',
+    price: 0.1, category: 'spicy',
     notes: { top: ['Hay'], base: ['Amber'] },
     volume: '12ml', image: 'https://images.unsplash.com/photo-1587017539504-67cfbddac569?w=800&h=1000&fit=crop',
     colorSwatch: '#6B8E23', rating: 4.6, reviewCount: 93
@@ -90,7 +90,7 @@ const fallbackProducts = [
     _id: '9', name: 'Kewra Attar', nameHindi: 'केवड़ा अत्तर',
     subtitle: 'Pandanus Flowers — The Culinary Treasure',
     description: 'Distilled from the male flowers of the Pandanus tree.',
-    price: 1800, category: 'fresh', badge: 'New',
+    price: 0.1, category: 'fresh', badge: 'New',
     notes: { top: ['Watery Green'], base: ['Light Musk'] },
     volume: '12ml', image: 'https://images.unsplash.com/photo-1563170351-be82bc888aa4?w=800&h=1000&fit=crop',
     colorSwatch: '#90EE90', rating: 4.5, reviewCount: 61
