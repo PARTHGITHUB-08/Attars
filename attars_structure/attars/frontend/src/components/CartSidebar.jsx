@@ -33,6 +33,7 @@ export default function CartSidebar() {
   };
 
   const validateEmail = (email) => {
+    if (!email || !email.trim()) return true;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email.trim());
   };
@@ -59,7 +60,7 @@ export default function CartSidebar() {
 
   const handleCheckoutSubmit = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
-    if (!customer.name || !customer.phone || !customer.email || !customer.address) return;
+    if (!customer.name || !customer.phone || !customer.address) return;
     
     const phoneNumber = '919313319897';
     const orderId = `ORD-${Date.now().toString().slice(-6).toUpperCase()}`;
@@ -268,12 +269,11 @@ export default function CartSidebar() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold uppercase text-cream-muted tracking-wider mb-2">Email Address *</label>
+                      <label className="block text-xs font-semibold uppercase text-cream-muted tracking-wider mb-2">Email Address (Optional)</label>
                       <input
                         type="email"
                         value={customer.email}
                         onChange={e => setCustomer({ ...customer, email: e.target.value })}
-                        required
                         placeholder="e.g. customer@example.com"
                         className="w-full bg-surface-2 border border-border-subtle rounded-xl p-3 text-sm text-cream focus:outline-none focus:border-gold/40 placeholder-cream-ghost transition-all duration-300"
                       />
@@ -549,7 +549,7 @@ export default function CartSidebar() {
                   </button>
                   <button
                     onClick={handleProceedToVerify}
-                    disabled={!customer.name || !customer.phone || !customer.email || !customer.address}
+                    disabled={!customer.name || !customer.phone || !customer.address}
                     className="flex-2 bg-gold-gradient hover:bg-gold-gradient-hover text-stone-950 px-8 py-3 rounded-full text-xs font-bold tracking-wider transition-all duration-300 shadow-md shadow-gold/15 disabled:opacity-50"
                   >
                     Continue to Verify
