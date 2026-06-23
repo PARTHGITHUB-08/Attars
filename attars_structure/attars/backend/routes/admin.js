@@ -82,9 +82,20 @@ router.post('/forgot-password', async (req, res, next) => {
 
     // Send reset key email
     const { sendResetKeyEmail } = await import('../utils/mailer.js');
-    await sendResetKeyEmail('parthgelani08@gmail.com', resetKey);
+    const sent = await sendResetKeyEmail('parthgelani08@gmail.com', resetKey);
 
-    res.json({ success: true, message: 'Security reset key sent to parthgelani08@gmail.com' });
+    if (sent) {
+      res.json({ success: true, message: 'Security reset key sent to parthgelani08@gmail.com' });
+    } else {
+      console.log(`\n==================================================`);
+      console.log(`[DEVELOPMENT] FORGOT PASSWORD RESET KEY: ${resetKey}`);
+      console.log(`==================================================\n`);
+      res.json({ 
+        success: true, 
+        message: 'EMAIL_PASS not configured in .env. Key logged to server console.',
+        devKey: resetKey 
+      });
+    }
   } catch (err) {
     next(err);
   }

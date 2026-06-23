@@ -255,7 +255,7 @@ export const sendResetKeyEmail = async (email, key) => {
         <p>A request was received to reset your Attraz Perfumes Admin credentials.</p>
         <p>Please use the security recovery key below to reset your password in the admin panel:</p>
         <div style="text-align: center; margin: 30px 0; padding: 15px; background-color: #8b6914; color: #ffffff; font-size: 24px; font-weight: bold; border-radius: 8px; letter-spacing: 4px; font-family: monospace;">
-          \${key}
+          ${key}
         </div>
         <p style="font-size: 11px; color: #8e7a6e;">This key is temporary and will expire shortly. If you did not request this, please verify your server security immediately.</p>
       </div>
@@ -264,7 +264,7 @@ export const sendResetKeyEmail = async (email, key) => {
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log(`[Mailer] Reset key email successfully sent to \${email}`);
+    console.log(`[Mailer] Reset key email successfully sent to ${email}`);
     return true;
   } catch (error) {
     console.error('[Mailer] Error sending reset key email:', error);

@@ -109,7 +109,11 @@ export default function Admin() {
     try {
       const res = await api.post('/admin/forgot-password');
       if (res.success) {
-        showToast('Reset key emailed to parthgelani08@gmail.com', 'success');
+        if (res.devKey) {
+          showToast(`Development Mode: Key is ${res.devKey}`, 'success');
+        } else {
+          showToast('Reset key emailed to parthgelani08@gmail.com', 'success');
+        }
         setResetKeySent(true);
       }
     } catch (err) {
