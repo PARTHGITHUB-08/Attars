@@ -95,15 +95,16 @@
     background: #ffffff !important;
     color: #000000 !important;
   }
-  /* Hide every page element except the print area */
-  body > *:not(#invoice-print-area) {
-    display: none !important;
+  /* Hide all elements on the page for printing */
+  body * {
+    visibility: hidden;
   }
-  #root, #root > * {
-    display: none !important;
+  /* Show only the invoice print area and all its children */
+  #invoice-print-area, #invoice-print-area * {
+    visibility: visible;
   }
+  /* Style the print area to fill the page print margins */
   #invoice-print-area {
-    display: block !important;
     position: absolute;
     left: 0;
     top: 0;
@@ -112,11 +113,15 @@
     padding: 20px;
     border: none !important;
     background: #ffffff !important;
-    color: #000000 !important;
     box-shadow: none !important;
   }
   #invoice-print-area * {
     color: #000000 !important;
-    border-color: #e5e7eb !important;
+    border-color: #d1d5db !important;
+  }
+  /* Hide print-hidden classes */
+  .print\:hidden {
+    display: none !important;
+    visibility: hidden !important;
   }
 }

@@ -1320,11 +1320,7 @@ export default function Admin() {
                       <span className="text-[9px] tracking-[0.25em] uppercase text-stone-500 font-semibold mt-1 block">The Soul of Pure Fragrance</span>
                     </div>
                   </div>
-                  <div className="text-left sm:text-right text-[11px] text-stone-500 space-y-0.5 leading-tight">
-                    <div className="font-semibold text-stone-800">ATTRAZ DISTILLERY PRIVATE LTD</div>
-                    <div>12, Royal Perfumers Row, Kannauj, UP, India</div>
-                    <div>contact@attraz.in · www.attraz.in</div>
-                  </div>
+                  {/* Company info removed from top right corner */}
                 </div>
 
                 {/* Tax Invoice Details / Bill To */}
@@ -1427,7 +1423,7 @@ export default function Admin() {
                     <div>Digital Trace ID: {invoiceId}-ATTRAZ</div>
                   </div>
                   <div className="text-right">
-                    <div className="w-32 border-b border-stone-300 pb-1 text-center font-display italic text-stone-600">Manoj Attarzwala</div>
+                    <div className="w-32 border-b border-stone-300 pb-1 text-center font-display italic text-stone-600">Meet Gelani</div>
                     <div className="mt-1">Authorized Signatory</div>
                   </div>
                 </div>
