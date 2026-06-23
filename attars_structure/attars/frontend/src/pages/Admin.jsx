@@ -748,7 +748,7 @@ export default function Admin() {
 
       <main className="max-w-7xl mx-auto px-5 sm:px-8 pt-8">
         {/* Dashboard Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
           <div className="border border-border-subtle bg-surface-1/50 rounded-2xl p-6 flex items-center gap-5">
             <div className="w-12 h-12 rounded-xl bg-gold-subtle border border-gold/15 flex items-center justify-center">
               <Package className="w-5 h-5 text-gold" />
@@ -774,6 +774,15 @@ export default function Admin() {
             <div>
               <div className="text-2xl font-display font-bold">{subscribers.length}</div>
               <div className="text-xs text-cream-ghost tracking-wide uppercase font-body mt-0.5">Newsletter Subscriptions</div>
+            </div>
+          </div>
+          <div className="border border-border-subtle bg-surface-1/50 rounded-2xl p-6 flex items-center gap-5">
+            <div className="w-12 h-12 rounded-xl bg-gold-subtle border border-gold/15 flex items-center justify-center">
+              <FileText className="w-5 h-5 text-gold" />
+            </div>
+            <div>
+              <div className="text-2xl font-display font-bold">{billingInvoices.length}</div>
+              <div className="text-xs text-cream-ghost tracking-wide uppercase font-body mt-0.5">Invoices Generated</div>
             </div>
           </div>
         </div>
@@ -1438,9 +1447,14 @@ export default function Admin() {
               </div>
 
               {/* Invoices Log / Session History */}
-              {billingInvoices.length > 0 && (
-                <div className="border border-border-subtle bg-surface-1/40 p-6 rounded-2xl shadow-xl space-y-4">
+              <div className="border border-border-subtle bg-surface-1/40 p-6 rounded-2xl shadow-xl space-y-4">
+                <div className="flex justify-between items-center border-b border-border-subtle pb-2">
                   <h3 className="font-display text-sm text-cream font-semibold tracking-wide uppercase">Session Billing Registry</h3>
+                  <span className="bg-gold-subtle text-gold px-2.5 py-0.5 rounded text-[10px] uppercase font-bold border border-gold/15">
+                    Total: {billingInvoices.length}
+                  </span>
+                </div>
+                {billingInvoices.length > 0 ? (
                   <div className="divide-y divide-border-subtle max-h-60 overflow-y-auto scrollbar-thin">
                     {billingInvoices.map((inv, idx) => (
                       <div key={inv.invoiceId || idx} className="py-3 flex items-center justify-between gap-4 text-xs font-body">
@@ -1488,8 +1502,12 @@ export default function Admin() {
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
+                ) : (
+                  <div className="text-center py-8 text-cream-ghost italic text-xs font-body">
+                    No invoices generated yet. Select items on the left to print and record your first invoice.
+                  </div>
+                )}
+              </div>
 
             </div>
 
