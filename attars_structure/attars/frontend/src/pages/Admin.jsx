@@ -478,13 +478,12 @@ export default function Admin() {
     try {
       await api.post('/invoices', newInvoice);
       showToast('Invoice generated successfully! Opening print dialog...', 'success');
-      handleClearInvoice();
-      loadAllData();
-
-      // Trigger printing
+      await loadAllData();
+      
+      // Trigger printing while the DOM elements are fully populated
       setTimeout(() => {
         window.print();
-      }, 100);
+      }, 150);
     } catch (err) {
       showToast(err.message || 'Error generating invoice', 'error');
     } finally {
