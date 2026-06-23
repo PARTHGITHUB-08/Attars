@@ -1304,7 +1304,7 @@ export default function Admin() {
               {/* Stationery Invoice wrapper */}
               <div 
                 id="invoice-print-area" 
-                className="border border-border-default bg-white p-8 sm:p-12 rounded-2xl shadow-2xl text-stone-900 font-body relative overflow-hidden"
+                className="border border-border-default bg-surface-0 p-8 sm:p-12 rounded-2xl shadow-2xl text-stone-900 font-body relative overflow-hidden"
               >
                 {/* Vintage Watermark Accent */}
                 <div className="absolute -top-10 -right-10 w-44 h-44 rounded-full border border-stone-200/50 flex items-center justify-center text-[100px] text-stone-100 font-display select-none pointer-events-none">अ</div>

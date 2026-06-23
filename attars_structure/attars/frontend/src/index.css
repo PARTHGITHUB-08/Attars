@@ -92,7 +92,7 @@
 
 @media print {
   body {
-    background: #ffffff !important;
+    background: #F5EFE4 !important;
     color: #000000 !important;
   }
   /* Hide all elements on the page for printing */
@@ -112,7 +112,7 @@
     margin: 0;
     padding: 20px;
     border: none !important;
-    background: #ffffff !important;
+    background: #F5EFE4 !important;
     box-shadow: none !important;
   }
   #invoice-print-area * {
