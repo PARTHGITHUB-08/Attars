@@ -4,18 +4,21 @@ import {
   Key, Shield, List, MessageSquare, Mail, 
   Download, Plus, Edit2, Trash2, CheckCircle, 
   XCircle, Home, LogOut, Package, RefreshCw,
-  FileText, Printer, PlusCircle, Trash 
+  FileText, Printer, PlusCircle, Trash,
+  BarChart2, TrendingUp, TrendingDown, Users, ShoppingBag,
+  Star, AlertCircle, DollarSign, Activity, Eye, Award
 } from 'lucide-react';
 import api from '../api/axios';
 import { useToast } from '../context/ToastContext';
 
 export default function Admin() {
-  const secretKey = 'attars-admin-2026';
-  const [activeTab, setActiveTab] = useState('products');
+  
+  const [activeTab, setActiveTab] = useState('dashboard');
   const { showToast } = useToast();
 
   // Authentication States
-  const [isAuthenticated, setIsAuthenticated] = useState(localStorage.getItem('attars_admin_authenticated') === 'true');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
   const [loginUser, setLoginUser] = useState('');
   const [loginPass, setLoginPass] = useState('');
   const [authError, setAuthError] = useState('');
@@ -35,6 +38,10 @@ export default function Admin() {
   const [testimonials, setTestimonials] = useState([]);
   const [subscribers, setSubscribers] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  // Dashboard Stats State
+  const [dashStats, setDashStats] = useState(null);
+  const [dashLoading, setDashLoading] = useState(false);
 
   // Billing States
   const [billingInvoices, setBillingInvoices] = useState([]);
@@ -67,18 +74,43 @@ export default function Admin() {
     origin: ''
   });
 
-  // Load all records on component mount or authentication
+  // Check auth via server on mount, then load data if authenticated
   useEffect(() => {
-    const key = localStorage.getItem('attars_admin_key') || secretKey;
+    const checkAuth = async () => {
+      try {
+        const res = await api.get('/admin/me');
+        if (res.success) {
+          setIsAuthenticated(true);
+          setSecurityUsername(res.username || '');
+        }
+      } catch {
+        setIsAuthenticated(false);
+      } finally {
+        setAuthChecked(true);
+      }
+    };
+    checkAuth();
+
+    // Listen for 401 responses (e.g., expired token)
+    const handleUnauthorized = () => {
+      setIsAuthenticated(false);
+    };
+    window.addEventListener('attars:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('attars:unauthorized', handleUnauthorized);
+  }, []);
+
+  useEffect(() => {
     if (isAuthenticated) {
-      loadAllData(key);
-      loadAdminUsername(key);
+      loadAllData();
     }
   }, [isAuthenticated]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('attars_admin_authenticated');
-    localStorage.removeItem('attars_admin_key');
+  const handleLogout = async () => {
+    try {
+      await api.post('/admin/logout');
+    } catch {
+      // ignore errors - clear state regardless
+    }
     setIsAuthenticated(false);
     showToast('Exited Admin Panel');
     window.location.href = '/';
@@ -91,8 +123,6 @@ export default function Admin() {
     try {
       const res = await api.post('/admin/login', { username: loginUser, password: loginPass });
       if (res.success) {
-        localStorage.setItem('attars_admin_authenticated', 'true');
-        localStorage.setItem('attars_admin_key', res.secretKey);
         setIsAuthenticated(true);
         showToast('Access authenticated successfully', 'success');
       }
@@ -151,14 +181,14 @@ export default function Admin() {
     }
   };
 
-  const loadAdminUsername = async (key) => {
+  const loadAdminUsername = async () => {
     try {
-      const res = await api.get('/admin/credentials', { headers: { 'x-admin-key': key } });
+      const res = await api.get('/admin/credentials');
       if (res.success) {
         setSecurityUsername(res.username);
       }
     } catch (err) {
-      console.error('Error fetching admin username:', err);
+      // ignore if not authenticated
     }
   };
 
@@ -175,10 +205,8 @@ export default function Admin() {
 
     setLoading(true);
     try {
-      const key = localStorage.getItem('attars_admin_key') || secretKey;
-      const res = await api.put('/admin/credentials', 
-        { username: securityUsername, password: securityPassword },
-        { headers: { 'x-admin-key': key } }
+      const res = await api.put('/admin/credentials',
+        { username: securityUsername, password: securityPassword }
       );
       if (res.success) {
         showToast('Admin credentials updated successfully!', 'success');
@@ -192,29 +220,27 @@ export default function Admin() {
     }
   };
 
-  const loadAllData = async (key = secretKey) => {
+  const loadAllData = async () => {
     setLoading(true);
     try {
-      const headers = { headers: { 'x-admin-key': key } };
-      
-      // Fetch Products
-      const prodRes = await api.get('/products');
+      // Fetch Products (admin view includes all, with/without images)
+      const prodRes = await api.get('/products?adminView=true');
       if (prodRes.success) {
         const pList = prodRes.data || [];
         setProducts(pList);
         if (pList.length > 0) setSelectedProductId(pList[0]._id);
       }
 
-      // Fetch Reviews (Admin route returns all reviews)
-      const testRes = await api.get('/testimonials/admin', headers);
+      // Fetch Reviews (admin route — auth cookie sent automatically)
+      const testRes = await api.get('/testimonials/admin');
       if (testRes.success) setTestimonials(testRes.data || []);
 
       // Fetch Subscribers
-      const subRes = await api.get('/newsletter/subscribers', headers);
+      const subRes = await api.get('/newsletter/subscribers');
       if (subRes.success) setSubscribers(subRes.data || []);
 
       // Fetch Invoices
-      const invRes = await api.get('/invoices', headers);
+      const invRes = await api.get('/invoices');
       if (invRes.success) setBillingInvoices(invRes.data || []);
 
     } catch (err) {
@@ -223,6 +249,26 @@ export default function Admin() {
       setLoading(false);
     }
   };
+
+  // Load dashboard stats
+  const loadDashboard = async () => {
+    setDashLoading(true);
+    try {
+      const res = await api.get('/admin/dashboard');
+      if (res.success) setDashStats(res.data);
+    } catch (err) {
+      showToast('Error loading dashboard stats', 'error');
+    } finally {
+      setDashLoading(false);
+    }
+  };
+
+  // Load dashboard when tab switches to it
+  useEffect(() => {
+    if (isAuthenticated && activeTab === 'dashboard') {
+      loadDashboard();
+    }
+  }, [activeTab, isAuthenticated]);
 
   // CSV Downloader
   const handleExportCSV = (type) => {
@@ -319,15 +365,11 @@ export default function Admin() {
         tags: productForm.tags ? productForm.tags.split(',').map(t => t.trim()).filter(Boolean) : []
       };
 
-      const headers = { headers: { 'x-admin-key': secretKey } };
-
       if (editingProduct) {
-        // Edit API Call
-        await api.put(`/products/${editingProduct._id}`, payload, headers);
+        await api.put(`/products/${editingProduct._id}`, payload);
         showToast('Product updated successfully');
       } else {
-        // Create API Call
-        await api.post('/products', payload, headers);
+        await api.post('/products', payload);
         showToast('Product created successfully');
       }
 
@@ -344,9 +386,7 @@ export default function Admin() {
     if (!window.confirm('Are you sure you want to delete this product?')) return;
     setLoading(true);
     try {
-      await api.delete(`/products/${id}`, {
-        headers: { 'x-admin-key': secretKey }
-      });
+      await api.delete(`/products/${id}`);
       showToast('Product deleted');
       loadAllData();
     } catch (err) {
@@ -360,9 +400,7 @@ export default function Admin() {
   const handleToggleApproval = async (id, currentStatus) => {
     setLoading(true);
     try {
-      await api.put(`/testimonials/${id}`, { approved: !currentStatus }, {
-        headers: { 'x-admin-key': secretKey }
-      });
+      await api.put(`/testimonials/${id}`, { approved: !currentStatus });
       showToast(`Review ${!currentStatus ? 'Approved' : 'Moved to Pending'}`);
       loadAllData();
     } catch (err) {
@@ -376,9 +414,7 @@ export default function Admin() {
     if (!window.confirm('Are you sure you want to delete this testimonial?')) return;
     setLoading(true);
     try {
-      await api.delete(`/testimonials/${id}`, {
-        headers: { 'x-admin-key': secretKey }
-      });
+      await api.delete(`/testimonials/${id}`);
       showToast('Review deleted');
       loadAllData();
     } catch (err) {
@@ -393,9 +429,7 @@ export default function Admin() {
     if (!window.confirm('Are you sure you want to unsubscribe this email?')) return;
     setLoading(true);
     try {
-      await api.delete(`/newsletter/subscribers/${id}`, {
-        headers: { 'x-admin-key': secretKey }
-      });
+      await api.delete(`/newsletter/subscribers/${id}`);
       showToast('Subscriber removed');
       loadAllData();
     } catch (err) {
@@ -495,10 +529,7 @@ export default function Admin() {
     if (!window.confirm('Verify payment and send final email to the customer?')) return;
     setLoading(true);
     try {
-      const key = localStorage.getItem('attars_admin_key') || secretKey;
-      await api.put(`/invoices/${id}/mark-paid`, {}, {
-        headers: { 'x-admin-key': key }
-      });
+      await api.put(`/invoices/${id}/mark-paid`, {});
       showToast('Payment verified and invoice email sent!', 'success');
       loadAllData();
     } catch (err) {
@@ -512,9 +543,7 @@ export default function Admin() {
     if (!window.confirm('Delete this invoice record from registry?')) return;
     setLoading(true);
     try {
-      await api.delete(`/invoices/${id}`, {
-        headers: { 'x-admin-key': localStorage.getItem('attars_admin_key') || secretKey }
-      });
+      await api.delete(`/invoices/${id}`);
       showToast('Invoice record deleted');
       loadAllData();
     } catch (err) {
@@ -539,6 +568,15 @@ export default function Admin() {
   };
 
 
+
+  // Show nothing while checking session (avoids login flash on page reload)
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen bg-surface-0 flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-gold/30 border-t-gold rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   // Render Dashboard if Authenticated
   if (!isAuthenticated) {
@@ -790,6 +828,7 @@ export default function Admin() {
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 border-b border-border-subtle pb-6 mb-8">
           <div className="flex gap-2">
             {[
+              { id: 'dashboard', label: 'Dashboard', icon: BarChart2 },
               { id: 'products', label: 'Products', icon: Package },
               { id: 'testimonials', label: 'Reviews', icon: MessageSquare },
               { id: 'subscribers', label: 'Subscribers', icon: Mail },
@@ -812,7 +851,7 @@ export default function Admin() {
           </div>
 
           <div className="flex gap-3">
-            {activeTab !== 'billing' && activeTab !== 'security' && (
+            {activeTab !== 'billing' && activeTab !== 'security' && activeTab !== 'dashboard' && (
               <button
                 onClick={() => handleExportCSV(activeTab)}
                 className="px-4 py-2.5 rounded-full border border-border-default bg-surface-1/30 hover:border-gold/30 hover:bg-gold-subtle text-xs font-body font-semibold tracking-wide flex items-center justify-center gap-2 transition-all"
@@ -833,6 +872,225 @@ export default function Admin() {
 
         {/* Tab Contents */}
         {loading && <div className="text-center py-20 text-cream-ghost font-body">Processing action...</div>}
+
+        {/* ─── DASHBOARD TAB ─────────────────────────────────────────── */}
+        {activeTab === 'dashboard' && (
+          <div className="space-y-8">
+            {dashLoading ? (
+              <div className="flex items-center justify-center py-24">
+                <div className="w-8 h-8 border-2 border-gold/30 border-t-gold rounded-full animate-spin" />
+              </div>
+            ) : dashStats ? (
+              <>
+                {/* KPI Cards Row */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  {[
+                    { label: 'Total Revenue', value: `₹${(dashStats.invoices.totalRevenue || 0).toLocaleString('en-IN')}`, sub: `${dashStats.invoices.paid} paid invoices`, icon: DollarSign, color: 'text-emerald-400', bg: 'bg-emerald-950/20 border-emerald-900/30' },
+                    { label: 'Total Products', value: dashStats.products.total, sub: `${dashStats.products.outOfStock} out of stock`, icon: Package, color: 'text-blue-400', bg: 'bg-blue-950/20 border-blue-900/30' },
+                    { label: 'Subscribers', value: dashStats.subscribers.active, sub: `${dashStats.subscribers.total} total signups`, icon: Users, color: 'text-purple-400', bg: 'bg-purple-950/20 border-purple-900/30' },
+                    { label: 'Pending Reviews', value: dashStats.reviews.pending, sub: `${dashStats.reviews.approved} approved`, icon: Star, color: 'text-amber-400', bg: 'bg-amber-950/20 border-amber-900/30' },
+                  ].map((kpi, i) => (
+                    <div key={i} className={`border rounded-2xl p-5 flex flex-col gap-3 ${kpi.bg}`}>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] uppercase tracking-widest font-bold text-cream-ghost font-body">{kpi.label}</span>
+                        <kpi.icon className={`w-4 h-4 ${kpi.color}`} />
+                      </div>
+                      <div className={`text-3xl font-display font-bold ${kpi.color}`}>{kpi.value}</div>
+                      <div className="text-[10px] text-cream-ghost font-body">{kpi.sub}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Revenue Chart + Category Breakdown */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                  {/* Monthly Revenue Bar Chart */}
+                  <div className="lg:col-span-2 border border-border-subtle bg-surface-1/40 rounded-2xl p-6">
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="font-display text-sm font-semibold text-cream tracking-wide">Revenue — Last 6 Months</h3>
+                      <TrendingUp className="w-4 h-4 text-gold" />
+                    </div>
+                    <div className="flex items-end gap-2 h-40">
+                      {(dashStats.invoices.monthlyRevenue || []).map((m, i) => {
+                        const maxRev = Math.max(...(dashStats.invoices.monthlyRevenue || []).map(x => x.revenue || 0), 1);
+                        const pct = ((m.revenue || 0) / maxRev) * 100;
+                        return (
+                          <div key={i} className="flex-1 flex flex-col items-center gap-1 group">
+                            <div className="text-[9px] text-gold font-bold font-body opacity-0 group-hover:opacity-100 transition-opacity">
+                              ₹{((m.revenue || 0) / 1000).toFixed(0)}k
+                            </div>
+                            <div className="w-full relative rounded-t-sm overflow-hidden bg-surface-2" style={{ height: '120px' }}>
+                              <div
+                                className="absolute bottom-0 w-full bg-gradient-to-t from-gold/80 to-gold/30 rounded-t-sm transition-all duration-700"
+                                style={{ height: `${Math.max(pct, 3)}%` }}
+                              />
+                            </div>
+                            <div className="text-[9px] text-cream-ghost font-body text-center">{m.month}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-border-subtle flex justify-between text-[10px] text-cream-ghost font-body">
+                      <span>Total: <span className="text-gold font-bold">₹{(dashStats.invoices.totalRevenue || 0).toLocaleString('en-IN')}</span></span>
+                      <span>Invoices: <span className="text-cream font-bold">{dashStats.invoices.total}</span></span>
+                    </div>
+                  </div>
+
+                  {/* Category Pie-style Breakdown */}
+                  <div className="border border-border-subtle bg-surface-1/40 rounded-2xl p-6">
+                    <h3 className="font-display text-sm font-semibold text-cream tracking-wide mb-6">Catalog by Category</h3>
+                    <div className="space-y-3">
+                      {(dashStats.categoryBreakdown || []).map((cat, i) => {
+                        const total = (dashStats.categoryBreakdown || []).reduce((s, c) => s + c.count, 0) || 1;
+                        const pct = Math.round((cat.count / total) * 100);
+                        const colors = ['bg-gold', 'bg-amber-500', 'bg-emerald-500', 'bg-blue-500', 'bg-purple-500', 'bg-rose-500', 'bg-cyan-500'];
+                        return (
+                          <div key={i} className="flex items-center gap-3">
+                            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${colors[i % colors.length]}`} />
+                            <div className="flex-1">
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="text-[11px] text-cream capitalize font-body">{cat.name}</span>
+                                <span className="text-[10px] text-cream-ghost">{cat.count} · {pct}%</span>
+                              </div>
+                              <div className="h-1.5 bg-surface-2 rounded-full overflow-hidden">
+                                <div className={`h-full rounded-full ${colors[i % colors.length]} opacity-70`} style={{ width: `${pct}%` }} />
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Top Products + Weekly Activity */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                  {/* Top Products Table */}
+                  <div className="lg:col-span-2 border border-border-subtle bg-surface-1/40 rounded-2xl p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-display text-sm font-semibold text-cream tracking-wide">Top Products by Revenue</h3>
+                      <Award className="w-4 h-4 text-gold" />
+                    </div>
+                    <div className="space-y-3">
+                      {(dashStats.topProducts || []).length === 0 ? (
+                        <p className="text-xs text-cream-ghost font-body text-center py-8">No invoice data yet. Generate invoices to see top products.</p>
+                      ) : (dashStats.topProducts || []).map((p, i) => (
+                        <div key={i} className="flex items-center gap-4 py-2 border-b border-border-subtle/50 last:border-0">
+                          <div className="w-6 h-6 rounded-full bg-gold-subtle border border-gold/20 flex items-center justify-center text-[10px] font-bold text-gold font-display">
+                            {i + 1}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs text-cream font-body font-semibold truncate">{p.name}</div>
+                            <div className="text-[10px] text-cream-ghost">{p.orders} order{p.orders !== 1 ? 's' : ''}</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-sm font-bold text-gold font-display">₹{(p.revenue || 0).toLocaleString('en-IN')}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Weekly Activity Sparkline + Quick Stats */}
+                  <div className="border border-border-subtle bg-surface-1/40 rounded-2xl p-6 flex flex-col gap-6">
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-display text-sm font-semibold text-cream tracking-wide">7-Day Orders</h3>
+                        <Activity className="w-4 h-4 text-gold" />
+                      </div>
+                      <div className="flex items-end gap-1 h-16">
+                        {(dashStats.weeklyActivity || [0,0,0,0,0,0,0]).map((v, i) => {
+                          const max = Math.max(...(dashStats.weeklyActivity || [1]), 1);
+                          const days = ['Mo','Tu','We','Th','Fr','Sa','Su'];
+                          const today = new Date().getDay();
+                          const dayIdx = (today - 6 + i + 7) % 7;
+                          return (
+                            <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                              <div className="w-full rounded-t-sm bg-gold/30 hover:bg-gold/60 transition-colors" style={{ height: `${Math.max((v / max) * 52, v > 0 ? 8 : 2)}px` }} />
+                              <span className="text-[8px] text-cream-ghost">{days[dayIdx]}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div className="space-y-3 pt-2 border-t border-border-subtle">
+                      {[
+                        { label: 'In Stock', value: dashStats.products.inStock, total: dashStats.products.total, color: 'text-emerald-400' },
+                        { label: 'Featured', value: dashStats.products.featured, total: dashStats.products.total, color: 'text-gold' },
+                        { label: 'Reviews Live', value: dashStats.reviews.approved, total: dashStats.reviews.total, color: 'text-blue-400' },
+                      ].map((s, i) => (
+                        <div key={i} className="flex justify-between text-xs font-body">
+                          <span className="text-cream-ghost">{s.label}</span>
+                          <span className={`font-semibold ${s.color}`}>{s.value} <span className="text-cream-ghost font-normal">/ {s.total}</span></span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Recent Invoices */}
+                {(dashStats.invoices.recentInvoices || []).length > 0 && (
+                  <div className="border border-border-subtle bg-surface-1/40 rounded-2xl p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-display text-sm font-semibold text-cream tracking-wide">Recent Invoices</h3>
+                      <button onClick={() => setActiveTab('billing')} className="text-[10px] text-gold hover:underline font-body">View All →</button>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs font-body">
+                        <thead>
+                          <tr className="border-b border-border-subtle text-cream-ghost text-[10px] uppercase tracking-wider">
+                            <th className="pb-2 text-left">Invoice</th>
+                            <th className="pb-2 text-left">Customer</th>
+                            <th className="pb-2 text-center">Date</th>
+                            <th className="pb-2 text-center">Status</th>
+                            <th className="pb-2 text-right">Amount</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border-subtle/40">
+                          {(dashStats.invoices.recentInvoices || []).map((inv, i) => (
+                            <tr key={i} className="text-cream">
+                              <td className="py-2 font-mono text-[11px] text-gold">{inv.invoiceId}</td>
+                              <td className="py-2">{inv.customer?.name || 'Walk-in'}</td>
+                              <td className="py-2 text-center text-cream-ghost">{inv.date || '—'}</td>
+                              <td className="py-2 text-center">
+                                <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${inv.paymentStatus === 'Paid' ? 'bg-emerald-950/30 text-emerald-400' : 'bg-gold-subtle text-gold'}`}>
+                                  {inv.paymentStatus || 'Pending'}
+                                </span>
+                              </td>
+                              <td className="py-2 text-right font-bold text-gold">₹{(inv.grandTotal || 0).toLocaleString('en-IN')}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* Quick Actions */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { label: 'Add Product', icon: Plus, action: () => { setActiveTab('products'); setTimeout(openCreateForm, 50); }, color: 'border-gold/30 hover:bg-gold-subtle text-gold' },
+                    { label: 'View Reviews', icon: MessageSquare, action: () => setActiveTab('testimonials'), color: 'border-blue-900/40 hover:bg-blue-950/20 text-blue-400' },
+                    { label: 'New Invoice', icon: Printer, action: () => setActiveTab('billing'), color: 'border-emerald-900/40 hover:bg-emerald-950/20 text-emerald-400' },
+                    { label: 'Security', icon: Shield, action: () => setActiveTab('security'), color: 'border-purple-900/40 hover:bg-purple-950/20 text-purple-400' },
+                  ].map((q, i) => (
+                    <button key={i} onClick={q.action} className={`border rounded-xl p-4 flex flex-col items-center gap-2 transition-all font-body ${q.color}`}>
+                      <q.icon className="w-5 h-5" />
+                      <span className="text-[11px] font-semibold">{q.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-24 text-cream-ghost font-body text-sm">
+                <BarChart2 className="w-12 h-12 mx-auto mb-4 opacity-20" />
+                <p>No dashboard data available.</p>
+                <button onClick={loadDashboard} className="mt-4 text-gold hover:underline text-xs">Retry</button>
+              </div>
+            )}
+          </div>
+        )}
 
         {!loading && activeTab === 'products' && !showProductForm && (
           <div className="border border-border-subtle bg-surface-1/30 rounded-2xl overflow-hidden shadow-xl">

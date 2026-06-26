@@ -1,25 +1,16 @@
-import { useEffect } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
 import Admin from './pages/Admin';
 import TrackOrder from './pages/TrackOrder';
 import Toast from './components/Toast';
 import CartSidebar from './components/CartSidebar';
 
+/**
+ * Root application component.
+ * NOTE: The Ctrl+A keyboard shortcut that previously bypassed admin authentication
+ * has been removed. Access /admin directly and log in with your credentials.
+ */
 export default function App() {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.ctrlKey && (e.key === 'a' || e.key === 'A')) {
-        e.preventDefault();
-        navigate('/admin');
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [navigate]);
-
   return (
     <>
       <Routes>

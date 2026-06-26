@@ -2,25 +2,16 @@ import express from 'express';
 import mongoose from 'mongoose';
 import Testimonial from '../models/Testimonial.js';
 import { mockTestimonials } from '../config/mockData.js';
+import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
-const SECRET_KEY = 'attars-admin-2026';
 
 const localTestimonials = mockTestimonials.map((t, index) => ({
   ...t,
-  _id: t._id || `mock-test-${index + 1}`
+  _id: t._id || `mock-test-${index + 1}`,
 }));
 
-// Admin middleware key validator
-const checkAdminKey = (req, res, next) => {
-  const key = req.headers['x-admin-key'] || req.query.key;
-  if (key !== SECRET_KEY) {
-    return res.status(401).json({ success: false, message: 'Unauthorized: Invalid Secret Key' });
-  }
-  next();
-};
-
-// GET /api/testimonials — fetch approved testimonials
+// GET /api/testimonials — approved testimonials (public)
 router.get('/', async (req, res, next) => {
   try {
     if (mongoose.connection.readyState !== 1) {
@@ -31,8 +22,8 @@ router.get('/', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// GET /api/testimonials/admin — fetch all testimonials for admin
-router.get('/admin', checkAdminKey, async (req, res, next) => {
+// GET /api/testimonials/admin — all reviews (admin only)
+router.get('/admin', requireAuth, async (req, res, next) => {
   try {
     if (mongoose.connection.readyState !== 1) {
       return res.json({ success: true, data: localTestimonials });
@@ -42,7 +33,7 @@ router.get('/admin', checkAdminKey, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// POST /api/testimonials — submit testimonial (defaults to unapproved)
+// POST /api/testimonials — submit review (public, defaults to unapproved)
 router.post('/', async (req, res, next) => {
   try {
     if (mongoose.connection.readyState !== 1) {
@@ -51,18 +42,18 @@ router.post('/', async (req, res, next) => {
         _id: `mock-test-${Date.now()}`,
         approved: false,
         createdAt: new Date(),
-        initials: (req.body.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+        initials: (req.body.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
       };
       localTestimonials.unshift(newTestimonial);
       return res.status(201).json({ success: true, message: 'Testimonial submitted for review' });
     }
-    const testimonial = await Testimonial.create({ ...req.body, approved: false });
+    await Testimonial.create({ ...req.body, approved: false });
     res.status(201).json({ success: true, message: 'Testimonial submitted for review' });
   } catch (err) { next(err); }
 });
 
-// PUT /api/testimonials/:id — update testimonial status (e.g. toggle approval)
-router.put('/:id', checkAdminKey, async (req, res, next) => {
+// PUT /api/testimonials/:id — approve/reject (admin only)
+router.put('/:id', requireAuth, async (req, res, next) => {
   try {
     const { approved } = req.body;
     if (mongoose.connection.readyState !== 1) {
@@ -77,8 +68,8 @@ router.put('/:id', checkAdminKey, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// DELETE /api/testimonials/:id — delete testimonial record
-router.delete('/:id', checkAdminKey, async (req, res, next) => {
+// DELETE /api/testimonials/:id (admin only)
+router.delete('/:id', requireAuth, async (req, res, next) => {
   try {
     if (mongoose.connection.readyState !== 1) {
       const idx = localTestimonials.findIndex(t => t._id === req.params.id);

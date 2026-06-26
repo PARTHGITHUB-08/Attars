@@ -14,3 +14,5 @@
 **/.idea/
 **/.DS_Store
 Thumbs.db
+# Admin settings (contains hashed credentials - never commit)
+**/config/admin_settings.json

@@ -1,121 +1,67 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import Invoice from '../models/Invoice.js';
+import { requireAuth } from '../middleware/auth.js';
 import { sendInvoiceEmail } from '../utils/mailer.js';
 
 const router = express.Router();
-const SECRET_KEY = 'attars-admin-2026';
 
-const checkAdminKey = (req, res, next) => {
-  const key = req.headers['x-admin-key'] || req.query.key;
-  if (key !== SECRET_KEY) {
-    return res.status(401).json({ success: false, message: 'Unauthorized' });
-  }
-  next();
-};
-
+// In-memory fallback when MongoDB is unavailable
 const localInvoices = [];
 
-// GET /api/invoices
-router.get('/', checkAdminKey, async (req, res, next) => {
+// GET /api/invoices (admin only)
+router.get('/', requireAuth, async (req, res, next) => {
   try {
     if (mongoose.connection.readyState !== 1) {
       return res.json({ success: true, data: localInvoices });
     }
     const invoices = await Invoice.find().sort({ createdAt: -1 });
     res.json({ success: true, data: invoices });
-  } catch (err) { next(err); }
+  } catch (err) {
+    next(err);
+  }
 });
 
-// POST /api/invoices
-router.post('/', async (req, res, next) => {
+// POST /api/invoices — create or update invoice (admin only)
+router.post('/', requireAuth, async (req, res, next) => {
   try {
     const { invoiceId, customer, items, subtotal, discount, cgst, sgst, grandTotal, date, paymentMethod, paymentStatus } = req.body;
-    
+
     if (!invoiceId || !customer || !items || !grandTotal) {
       return res.status(400).json({ success: false, message: 'Missing required invoice details' });
     }
 
-    const method = paymentMethod || 'UPI';
+    const method = paymentMethod || 'Cash';
     const status = paymentStatus || 'Pending';
 
     let savedInvoice;
     if (mongoose.connection.readyState !== 1) {
       const idx = localInvoices.findIndex(inv => inv.invoiceId === invoiceId);
       if (idx !== -1) {
-        localInvoices[idx] = {
-          ...localInvoices[idx],
-          customer,
-          items,
-          subtotal,
-          discount,
-          cgst,
-          sgst,
-          grandTotal,
-          date,
-          paymentMethod: method,
-          paymentStatus: status
-        };
+        localInvoices[idx] = { ...localInvoices[idx], customer, items, subtotal, discount, cgst, sgst, grandTotal, date, paymentMethod: method, paymentStatus: status };
         savedInvoice = localInvoices[idx];
       } else {
-        savedInvoice = {
-          _id: `mock-inv-${Date.now()}`,
-          invoiceId,
-          customer,
-          items,
-          subtotal,
-          discount,
-          cgst,
-          sgst,
-          grandTotal,
-          date,
-          paymentMethod: method,
-          paymentStatus: status,
-          createdAt: new Date()
-        };
+        savedInvoice = { _id: `mock-inv-${Date.now()}`, invoiceId, customer, items, subtotal, discount, cgst, sgst, grandTotal, date, paymentMethod: method, paymentStatus: status, createdAt: new Date() };
         localInvoices.unshift(savedInvoice);
       }
     } else {
       const existing = await Invoice.findOne({ invoiceId });
       if (existing) {
-        existing.customer = customer;
-        existing.items = items;
-        existing.subtotal = subtotal;
-        existing.discount = discount;
-        existing.cgst = cgst;
-        existing.sgst = sgst;
-        existing.grandTotal = grandTotal;
-        existing.date = date;
-        existing.paymentMethod = method;
-        existing.paymentStatus = status;
+        Object.assign(existing, { customer, items, subtotal, discount, cgst, sgst, grandTotal, date, paymentMethod: method, paymentStatus: status });
         savedInvoice = await existing.save();
       } else {
-        savedInvoice = await Invoice.create({
-          invoiceId,
-          customer,
-          items,
-          subtotal,
-          discount,
-          cgst,
-          sgst,
-          grandTotal,
-          date,
-          paymentMethod: method,
-          paymentStatus: status
-        });
+        savedInvoice = await Invoice.create({ invoiceId, customer, items, subtotal, discount, cgst, sgst, grandTotal, date, paymentMethod: method, paymentStatus: status });
       }
     }
 
-    // Trigger automated email dispatch immediately ONLY for Cash or already Paid invoices
+    // Send email for cash payments or already-paid invoices
     const contact = customer.contact || '';
     if (contact.includes('@')) {
       const email = contact.trim().split(/\s+/).find(word => word.includes('@'));
-      if (email) {
-        if (method === 'Cash' || status === 'Paid') {
-          sendInvoiceEmail(email, customer.name, invoiceId, items, grandTotal, date, method, status).catch(err => {
-            console.error('[Mailer Error] Failed to send automated invoice email:', err);
-          });
-        }
+      if (email && (method === 'Cash' || status === 'Paid')) {
+        sendInvoiceEmail(email, customer.name, invoiceId, items, grandTotal, date, method, status).catch(err => {
+          console.error('[Mailer Error]', err.message);
+        });
       }
     }
 
@@ -125,7 +71,7 @@ router.post('/', async (req, res, next) => {
   }
 });
 
-// GET /api/invoices/:id (Public tracking endpoint)
+// GET /api/invoices/:id — public tracking (by invoiceId string)
 router.get('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -133,10 +79,8 @@ router.get('/:id', async (req, res, next) => {
     if (mongoose.connection.readyState !== 1) {
       invoice = localInvoices.find(inv => inv.invoiceId === id || inv._id === id);
     } else {
-      invoice = await Invoice.findById(id);
-      if (!invoice) {
-        invoice = await Invoice.findOne({ invoiceId: id });
-      }
+      invoice = await Invoice.findById(id).catch(() => null);
+      if (!invoice) invoice = await Invoice.findOne({ invoiceId: id });
     }
     if (!invoice) {
       return res.status(404).json({ success: false, message: 'Order/Invoice not found' });
@@ -147,8 +91,8 @@ router.get('/:id', async (req, res, next) => {
   }
 });
 
-// PUT /api/invoices/:id/mark-paid
-router.put('/:id/mark-paid', checkAdminKey, async (req, res, next) => {
+// PUT /api/invoices/:id/mark-paid (admin only)
+router.put('/:id/mark-paid', requireAuth, async (req, res, next) => {
   try {
     const { id } = req.params;
     let invoice;
@@ -157,34 +101,31 @@ router.put('/:id/mark-paid', checkAdminKey, async (req, res, next) => {
       if (!invoice) return res.status(404).json({ success: false, message: 'Invoice not found' });
       invoice.paymentStatus = 'Paid';
     } else {
-      invoice = await Invoice.findById(id);
-      if (!invoice) {
-        invoice = await Invoice.findOne({ invoiceId: id });
-      }
+      invoice = await Invoice.findById(id).catch(() => null);
+      if (!invoice) invoice = await Invoice.findOne({ invoiceId: id });
       if (!invoice) return res.status(404).json({ success: false, message: 'Invoice not found' });
       invoice.paymentStatus = 'Paid';
       await invoice.save();
     }
 
-    // Trigger email now that payment is confirmed
     const contact = invoice.customer.contact || '';
     if (contact.includes('@')) {
       const email = contact.trim().split(/\s+/).find(word => word.includes('@'));
       if (email) {
         sendInvoiceEmail(email, invoice.customer.name, invoice.invoiceId, invoice.items, invoice.grandTotal, invoice.date, invoice.paymentMethod, 'Paid').catch(err => {
-          console.error('[Mailer Error] Failed to send invoice email after payment verification:', err);
+          console.error('[Mailer Error]', err.message);
         });
       }
     }
 
-    res.json({ success: true, message: 'Invoice marked as paid and sent to customer', data: invoice });
+    res.json({ success: true, message: 'Invoice marked as paid', data: invoice });
   } catch (err) {
     next(err);
   }
 });
 
-// DELETE /api/invoices/:id
-router.delete('/:id', checkAdminKey, async (req, res, next) => {
+// DELETE /api/invoices/:id (admin only)
+router.delete('/:id', requireAuth, async (req, res, next) => {
   try {
     const { id } = req.params;
     if (mongoose.connection.readyState !== 1) {
@@ -193,14 +134,13 @@ router.delete('/:id', checkAdminKey, async (req, res, next) => {
       localInvoices.splice(idx, 1);
       return res.json({ success: true, message: 'Invoice deleted successfully' });
     }
-    
-    let invoice = await Invoice.findByIdAndDelete(id);
-    if (!invoice) {
-      invoice = await Invoice.findOneAndDelete({ invoiceId: id });
-    }
+    let invoice = await Invoice.findByIdAndDelete(id).catch(() => null);
+    if (!invoice) invoice = await Invoice.findOneAndDelete({ invoiceId: id });
     if (!invoice) return res.status(404).json({ success: false, message: 'Invoice not found' });
     res.json({ success: true, message: 'Invoice deleted successfully' });
-  } catch (err) { next(err); }
+  } catch (err) {
+    next(err);
+  }
 });
 
 export default router;

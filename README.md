@@ -1,55 +1,108 @@
 # Attars — The Soul of Pure Fragrance
 
-Attars is a premium, handcrafted natural fragrance storefront built on traditional Indian heritage and the ancient **Deg-Bhapka** steam distillation technique. This project contains a fully custom, high-fidelity responsive storefront along with an administrative portal.
+Premium traditional Indian fragrance storefront built on the ancient **Deg-Bhapka** steam distillation technique. Full-stack React + Node.js e-commerce platform with secure admin panel, invoice generation, and product management.
 
 ---
 
-## Key Features
+## Security
 
-### 🌟 Brand Styling & Premium Aesthetics
-*   **Warm Linen Theme**: Re-styled body background (`#F5EFE4`) and border surfaces to create a warm, luxurious, heritage parchment aesthetic that compliments gold typography and dark charcoal text.
-*   **Elegantly Centered Legacy View**: Realigned the storytelling section to focus entirely on the craftsmanship narrative with a centered maximum-width layout.
+This version replaces the previous `Ctrl+A` backdoor with a proper JWT authentication system:
 
-### 🛒 Smooth Cart Panel Drawer
-*   **Interactive Sidebar**: Sliding panel drawer built with smooth `framer-motion` physics that opens automatically when items are added.
-*   **Bag Controls**: Edit item quantities, delete selections, and track subtotal/wrapping costs dynamically.
-*   **COD Checkout**: Multi-step checkout form capturing recipient details and rendering a post-purchase printable invoice summary.
-
-### 🔍 Photo Filtering Logic
-*   **Client & Server Constraints**: Non-admin storefront queries automatically hide products that do not contain a valid photo, preventing broken image placeholders. The admin panel continues to show all items to allow photos to be added.
-
-### 🔑 Administrative Control & Shortcut
-*   **Ctrl+A Bypassed Access**: Pressing `Ctrl+A` anywhere on the site automatically logs in the administrator (saving credentials to `localStorage`) and redirects them to the admin panel. No key prompts required.
-
-### 🧾 Invoice Billing Generator
-*   **Live Stationery Invoice Creator**: A dedicated billing tab in the admin dashboard allows managers to input client information, select fragrances from the active catalog, apply discounts, and generate a beautiful GST-compliant Tax Invoice (9% CGST + 9% SGST).
-*   **Clean Print System**: Print button triggers standard `window.print()` rendering a print stylesheet that formats *only* the vintage receipt sheet (hiding the rest of the browser dashboard).
-*   **Registry Log**: Stores session invoices with single-click edit/reprint or deletion options.
+- **Passwords** hashed with bcrypt (12 rounds) — never stored in plain text
+- **Sessions** stored in HTTP-only cookies (not localStorage) — immune to XSS
+- **All admin endpoints** protected by JWT middleware
+- **Rate limiting** on login (10 attempts/15 min) and forgot-password (5/hour)
+- **Helmet.js** security headers on all responses
+- **CORS** restricted to configured frontend origin
 
 ---
 
 ## Tech Stack
-*   **Frontend**: React (Vite, React Router DOM, Framer Motion, Lucide Icons, TailwindCSS).
-*   **Backend**: Node.js (Express, Mongoose MongoDB).
+
+- **Frontend**: React 18 + Vite + TailwindCSS + Framer Motion
+- **Backend**: Node.js + Express + Mongoose (MongoDB)
+- **Auth**: JWT (HTTP-only cookies) + bcryptjs
+- **Security**: Helmet, express-rate-limit, cookie-parser
 
 ---
 
-## Local Setup & Run Commands
+## Local Setup
 
-### 1. Backend Server
-Navigate to the backend directory, install packages, and start the development server:
+### 1. Backend
+
 ```bash
 cd attars_structure/attars/backend
 npm install
+cp .env.example .env        # fill in your values
 npm run dev
 ```
-*Note: If local MongoDB is not running, the server automatically defaults to a secure in-memory mock database.*
 
-### 2. Storefront App
-Navigate to the frontend directory, install packages, and launch Vite dev server:
+Default admin credentials (first run, if no DB record exists):
+- **Username**: `admin`
+- **Password**: `Attars@2026!` (set `ADMIN_PASSWORD` in `.env` to change)
+
+### 2. Frontend
+
 ```bash
 cd attars_structure/attars/frontend
 npm install
 npm run dev
 ```
-Open [http://localhost:5173/](http://localhost:5173/) to browse the shop storefront.
+
+Open **http://localhost:5173** for the storefront.  
+Admin panel: **http://localhost:5173/admin**
+
+---
+
+## Admin Dashboard
+
+The admin panel (`/admin`) includes:
+
+| Tab | Features |
+|-----|----------|
+| **Dashboard** | Revenue charts, KPI cards, category breakdown, top products, 7-day activity |
+| **Products** | Full CRUD — create, edit, delete, image URL, stock, featured toggle |
+| **Reviews** | Approve/reject testimonials before they appear on the storefront |
+| **Subscribers** | View & manage newsletter signups, CSV export |
+| **Invoice Generator** | GST-compliant (CGST 9% + SGST 9%) printable tax invoices, registry log |
+| **Security Settings** | Change admin username/password; forgot-password OTP flow |
+
+---
+
+## API Reference
+
+```
+POST   /api/admin/login              Login (rate-limited)
+POST   /api/admin/logout             Clear session cookie
+GET    /api/admin/me                 Verify current session
+PUT    /api/admin/credentials        Change credentials (auth required)
+GET    /api/admin/dashboard          Aggregated stats (auth required)
+POST   /api/admin/forgot-password    Request OTP reset
+POST   /api/admin/reset-password     Reset with OTP
+
+GET    /api/products                 List products (public)
+POST   /api/products                 Create product (auth required)
+PUT    /api/products/:id             Update product (auth required)
+DELETE /api/products/:id             Delete product (auth required)
+
+GET    /api/testimonials             Approved reviews (public)
+GET    /api/testimonials/admin       All reviews (auth required)
+PUT    /api/testimonials/:id         Approve/reject (auth required)
+DELETE /api/testimonials/:id         Delete (auth required)
+
+POST   /api/newsletter/subscribe     Subscribe (public)
+GET    /api/newsletter/subscribers   List subscribers (auth required)
+DELETE /api/newsletter/subscribers/:id  Remove (auth required)
+
+GET    /api/invoices                 List invoices (auth required)
+POST   /api/invoices                 Create invoice (auth required)
+GET    /api/invoices/:id             Track by ID (public)
+PUT    /api/invoices/:id/mark-paid   Mark paid (auth required)
+DELETE /api/invoices/:id             Delete (auth required)
+```
+
+---
+
+## Payment
+
+**Cash on Delivery (COD) only** — no payment gateway integrated by design.
