@@ -6,6 +6,7 @@ import Marquee from '../components/Marquee';
 import Legacy from '../components/Legacy';
 import Process from '../components/Process';
 import Collection from '../components/Collection';
+import Testimonials from '../components/Testimonials';
 import Newsletter from '../components/Newsletter';
 import Footer from '../components/Footer';
 import BackToTop from '../components/BackToTop';
@@ -38,6 +39,7 @@ export default function Home() {
           <Legacy />
           <Process />
           <Collection />
+          <Testimonials />
           <Newsletter />
           <Footer />
           <BackToTop />

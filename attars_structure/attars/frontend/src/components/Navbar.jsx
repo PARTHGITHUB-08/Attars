@@ -39,18 +39,12 @@ export default function Navbar() {
       >
         <div className="max-w-7xl mx-auto px-5 sm:px-8 h-16 sm:h-[72px] flex items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-full border border-gold/30 flex items-center justify-center group-hover:border-gold/60 transition-colors duration-300 bg-gold-subtle">
-              <span className="font-display text-gold text-base font-semibold leading-none">स</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="font-display text-lg font-semibold text-cream tracking-wide leading-none">
-                SAURABH
-              </span>
-              <span className="text-[8px] tracking-[0.25em] uppercase text-gold/50 font-body leading-none mt-0.5">
-                The Soul of Fragrance
-              </span>
-            </div>
+          <Link to="/" className="flex items-center group">
+            <img 
+              src="/logo_full.png" 
+              alt="Saurabh — The Soul of Pure Fragrance" 
+              className="h-9 sm:h-11 w-auto object-contain transition-transform duration-300 group-hover:scale-[1.02]"
+            />
           </Link>
 
           {/* Desktop nav */}

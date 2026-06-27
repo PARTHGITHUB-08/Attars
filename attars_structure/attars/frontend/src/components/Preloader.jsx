@@ -27,7 +27,11 @@ export default function Preloader() {
             transition={{ repeat: Infinity, duration: 8, ease: "linear" }}
             className="absolute inset-[-4px] border border-dashed border-gold/15 rounded-full"
           />
-          <span className="font-display text-gold text-3xl font-semibold leading-none select-none">स</span>
+          <img 
+            src="/logo_icon.png" 
+            alt="Saurabh Logo Icon" 
+            className="w-11 h-11 object-contain select-none"
+          />
         </motion.div>
 
         {/* Fading brand name */}

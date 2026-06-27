@@ -23,14 +23,12 @@ export default function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 lg:gap-10 mb-14">
           {/* Brand */}
           <div className="col-span-2 md:col-span-4 lg:col-span-2">
-            <div className="flex items-center gap-2.5 mb-5">
-              <div className="w-9 h-9 rounded-full border border-gold/30 flex items-center justify-center bg-gold-subtle">
-                <span className="font-display text-gold text-base font-semibold leading-none">स</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="font-display text-lg font-semibold text-cream tracking-wide leading-none">SAURABH</span>
-                <span className="text-[8px] tracking-[0.25em] uppercase text-gold/50 font-body leading-none mt-0.5">The Soul of Fragrance</span>
-              </div>
+            <div className="mb-5 flex items-center">
+              <img 
+                src="/logo_full.png" 
+                alt="Saurabh — The Soul of Pure Fragrance" 
+                className="h-10 w-auto object-contain"
+              />
             </div>
             <p className="text-[13px] text-cream-faint font-body leading-[1.7] mb-5 max-w-xs">
               Handcrafted natural attars. Preserving the pure art of traditional

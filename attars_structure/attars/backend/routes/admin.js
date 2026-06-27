@@ -167,8 +167,8 @@ router.get('/dashboard', requireAuth, async (req, res, next) => {
         success: true,
         data: {
           products: { total: mockProducts.length, inStock: mockProducts.filter(p => p.inStock !== false).length, outOfStock: mockProducts.filter(p => p.inStock === false).length, featured: mockProducts.filter(p => p.featured).length },
-          reviews: { total: mockTestimonials.length, approved: mockTestimonials.filter(t => t.approved !== false).length, pending: mockTestimonials.filter(t => t.approved === false).length },
-          subscribers: { total: 2, active: 2 },
+          reviews: { total: 0, approved: 0, pending: 0 },
+          subscribers: { total: 0, active: 0 },
           invoices: { total: 18, totalRevenue: 284500, paid: 14, pending: 4, monthlyRevenue: months, recentInvoices: [] },
           topProducts: mockProducts.slice(0, 5).map(p => ({ name: p.name, revenue: p.price * Math.floor(Math.random() * 15 + 3), orders: Math.floor(Math.random() * 15 + 3), rating: p.rating || 4.5 })),
           categoryBreakdown: catBreakdown,

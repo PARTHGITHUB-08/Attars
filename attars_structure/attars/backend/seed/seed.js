@@ -2,7 +2,8 @@ import mongoose from 'mongoose';
 import { connectDB } from '../config/db.js';
 import Product from '../models/Product.js';
 import Testimonial from '../models/Testimonial.js';
-import { mockProducts, mockTestimonials } from '../config/mockData.js';
+import Subscriber from '../models/Subscriber.js';
+import { mockProducts } from '../config/mockData.js';
 
 const seedDB = async () => {
   try {
@@ -13,13 +14,12 @@ const seedDB = async () => {
     
     await Product.deleteMany({});
     await Testimonial.deleteMany({});
+    await Subscriber.deleteMany({});
     console.log('Cleared existing data');
 
     await Product.insertMany(mockProducts);
     console.log(`Seeded ${mockProducts.length} products`);
-
-    await Testimonial.insertMany(mockTestimonials);
-    console.log(`Seeded ${mockTestimonials.length} testimonials`);
+    console.log('Testimonials and Subscribers collections reset to clean empty state.');
 
     console.log('Seed complete!');
     process.exit(0);

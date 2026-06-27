@@ -6,10 +6,7 @@ import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
-const localTestimonials = mockTestimonials.map((t, index) => ({
-  ...t,
-  _id: t._id || `mock-test-${index + 1}`,
-}));
+const localTestimonials = [];
 
 // GET /api/testimonials — approved testimonials (public)
 router.get('/', async (req, res, next) => {
@@ -36,18 +33,26 @@ router.get('/admin', requireAuth, async (req, res, next) => {
 // POST /api/testimonials — submit review (public, defaults to unapproved)
 router.post('/', async (req, res, next) => {
   try {
+    const initials = (req.body.name || 'U')
+      .split(' ')
+      .filter(Boolean)
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2) || 'U';
+
     if (mongoose.connection.readyState !== 1) {
       const newTestimonial = {
         ...req.body,
         _id: `mock-test-${Date.now()}`,
         approved: false,
         createdAt: new Date(),
-        initials: (req.body.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
+        initials,
       };
       localTestimonials.unshift(newTestimonial);
       return res.status(201).json({ success: true, message: 'Testimonial submitted for review' });
     }
-    await Testimonial.create({ ...req.body, approved: false });
+    await Testimonial.create({ ...req.body, initials, approved: false });
     res.status(201).json({ success: true, message: 'Testimonial submitted for review' });
   } catch (err) { next(err); }
 });

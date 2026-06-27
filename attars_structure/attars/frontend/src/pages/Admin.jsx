@@ -588,9 +588,11 @@ export default function Admin() {
         {loginMode === 'login' ? (
           <form onSubmit={handleLogin} className="w-full max-w-sm border border-border-subtle bg-surface-1/40 p-8 rounded-2xl shadow-2xl relative space-y-6">
             <div className="text-center pb-4 border-b border-border-subtle">
-              <div className="w-12 h-12 rounded-full border border-gold/30 flex items-center justify-center bg-gold-subtle mx-auto mb-3">
-                <span className="font-display text-gold text-sm font-semibold">स</span>
-              </div>
+              <img 
+                src="/logo_icon.png" 
+                alt="Saurabh Logo Icon" 
+                className="w-12 h-12 object-contain mx-auto mb-3"
+              />
               <h2 className="font-display text-lg font-bold tracking-wider text-cream">SAURABH ADMIN PORTAL</h2>
               <p className="text-[10px] text-cream-ghost uppercase tracking-[0.2em] mt-1">Security Authenticator</p>
             </div>
@@ -759,9 +761,11 @@ export default function Admin() {
       <header className="border-b border-border-subtle bg-surface-1/30 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full border border-gold/30 flex items-center justify-center bg-gold-subtle">
-              <span className="font-display text-gold text-sm font-semibold">स</span>
-            </div>
+            <img 
+              src="/logo_icon.png" 
+              alt="Saurabh Logo Icon" 
+              className="w-8 h-8 object-contain"
+            />
             <span className="font-display text-base font-semibold text-cream tracking-wide">SAURABH ADMIN</span>
           </Link>
 
@@ -885,18 +889,18 @@ export default function Admin() {
                 {/* KPI Cards Row */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                   {[
-                    { label: 'Total Revenue', value: `₹${(dashStats.invoices.totalRevenue || 0).toLocaleString('en-IN')}`, sub: `${dashStats.invoices.paid} paid invoices`, icon: DollarSign, color: 'text-emerald-400', bg: 'bg-emerald-950/20 border-emerald-900/30' },
-                    { label: 'Total Products', value: dashStats.products.total, sub: `${dashStats.products.outOfStock} out of stock`, icon: Package, color: 'text-blue-400', bg: 'bg-blue-950/20 border-blue-900/30' },
-                    { label: 'Subscribers', value: dashStats.subscribers.active, sub: `${dashStats.subscribers.total} total signups`, icon: Users, color: 'text-purple-400', bg: 'bg-purple-950/20 border-purple-900/30' },
-                    { label: 'Pending Reviews', value: dashStats.reviews.pending, sub: `${dashStats.reviews.approved} approved`, icon: Star, color: 'text-amber-400', bg: 'bg-amber-950/20 border-amber-900/30' },
+                    { label: 'Total Revenue', value: `₹${(dashStats.invoices.totalRevenue || 0).toLocaleString('en-IN')}`, sub: `${dashStats.invoices.paid} paid invoices`, icon: DollarSign, bg: 'bg-[#1C1A17] border-gold/15 shadow-xl shadow-black/10' },
+                    { label: 'Total Products', value: dashStats.products.total, sub: `${dashStats.products.outOfStock} out of stock`, icon: Package, bg: 'bg-[#1C1A17] border-gold/15 shadow-xl shadow-black/10' },
+                    { label: 'Subscribers', value: dashStats.subscribers.active, sub: `${dashStats.subscribers.total} total signups`, icon: Users, bg: 'bg-[#1C1A17] border-gold/15 shadow-xl shadow-black/10' },
+                    { label: 'Pending Reviews', value: dashStats.reviews.pending, sub: `${dashStats.reviews.approved} approved`, icon: Star, bg: 'bg-[#1C1A17] border-gold/15 shadow-xl shadow-black/10' },
                   ].map((kpi, i) => (
-                    <div key={i} className={`border rounded-2xl p-5 flex flex-col gap-3 ${kpi.bg}`}>
+                    <div key={i} className={`border rounded-2xl p-5 flex flex-col gap-3 transition-all duration-300 hover:scale-[1.02] ${kpi.bg}`}>
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] uppercase tracking-widest font-bold text-cream-ghost font-body">{kpi.label}</span>
-                        <kpi.icon className={`w-4 h-4 ${kpi.color}`} />
+                        <span className="text-[10px] uppercase tracking-widest font-bold text-gold/60 font-body">{kpi.label}</span>
+                        <kpi.icon className="w-4 h-4 text-gold-light" />
                       </div>
-                      <div className={`text-3xl font-display font-bold ${kpi.color}`}>{kpi.value}</div>
-                      <div className="text-[10px] text-cream-ghost font-body">{kpi.sub}</div>
+                      <div className="text-3xl font-display font-bold text-gold-light">{kpi.value}</div>
+                      <div className="text-[10px] text-cream-ghost/85 font-body">{kpi.sub}</div>
                     </div>
                   ))}
                 </div>

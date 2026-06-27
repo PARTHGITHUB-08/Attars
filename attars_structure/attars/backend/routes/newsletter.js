@@ -6,10 +6,7 @@ import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
-const localSubscribers = [
-  { _id: 'mock-sub-1', email: 'royal.collector@attars.in', subscribedAt: new Date(Date.now() - 86400000 * 2), active: true },
-  { _id: 'mock-sub-2', email: 'monsoon.lover@gmail.com', subscribedAt: new Date(Date.now() - 86400000), active: true },
-];
+const localSubscribers = [];
 
 // POST /api/newsletter/subscribe (public)
 router.post('/subscribe', async (req, res, next) => {
