@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'attars-super-secret-jwt-key-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET || 'saurabh-super-secret-jwt-key-change-in-production';
 
 /**
  * Middleware: verify JWT from HTTP-only cookie or Authorization header.
@@ -9,7 +9,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'attars-super-secret-jwt-key-change
 export function requireAuth(req, res, next) {
   try {
     const token =
-      req.cookies?.attars_admin_token ||
+      req.cookies?.saurabh_admin_token ||
       (req.headers.authorization?.startsWith('Bearer ')
         ? req.headers.authorization.slice(7)
         : null);

@@ -17,7 +17,7 @@ api.interceptors.response.use(
   err => {
     // If we get a 401, dispatch an event so the Admin page can reset auth state
     if (err.response?.status === 401) {
-      window.dispatchEvent(new Event('attars:unauthorized'));
+      window.dispatchEvent(new Event('saurabh:unauthorized'));
     }
     const message = err.response?.data?.message || 'Something went wrong';
     return Promise.reject(new Error(message));

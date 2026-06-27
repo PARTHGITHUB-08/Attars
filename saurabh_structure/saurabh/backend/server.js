@@ -59,7 +59,7 @@ app.use('/api/admin', adminRoutes);
 
 // ─── Health Check ────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Attars API is running' });
+  res.json({ status: 'ok', message: 'Saurabh API is running' });
 });
 
 // ─── 404 Handler ─────────────────────────────────────────────────────────────
@@ -80,5 +80,5 @@ app.use((err, req, res, next) => {
 
 // ─── Start ───────────────────────────────────────────────────────────────────
 connectDB().then(() => {
-  app.listen(PORT, () => console.log(`Attars server running on port ${PORT}`));
+  app.listen(PORT, () => console.log(`Saurabh server running on port ${PORT}`));
 });

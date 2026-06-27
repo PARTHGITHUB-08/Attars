@@ -1,4 +1,4 @@
-# Attars — The Soul of Pure Fragrance
+# Saurabh — The Soul of Pure Fragrance
 
 Premium traditional Indian fragrance storefront built on the ancient **Deg-Bhapka** steam distillation technique. Full-stack React + Node.js e-commerce platform with secure admin panel, invoice generation, and product management.
 
@@ -31,7 +31,7 @@ This version replaces the previous `Ctrl+A` backdoor with a proper JWT authentic
 ### 1. Backend
 
 ```bash
-cd attars_structure/attars/backend
+cd saurabh_structure/saurabh/backend
 npm install
 cp .env.example .env        # fill in your values
 npm run dev
@@ -39,12 +39,12 @@ npm run dev
 
 Default admin credentials (first run, if no DB record exists):
 - **Username**: `admin`
-- **Password**: `Attars@2026!` (set `ADMIN_PASSWORD` in `.env` to change)
+- **Password**: `Saurabh@2026!` (set `ADMIN_PASSWORD` in `.env` to change)
 
 ### 2. Frontend
 
 ```bash
-cd attars_structure/attars/frontend
+cd saurabh_structure/saurabh/frontend
 npm install
 npm run dev
 ```

@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useCallback, useEffect } from 'rea
 
 const CartContext = createContext();
 
-const CART_KEY = 'attars_cart';
+const CART_KEY = 'saurabh_cart';
 
 function loadCart() {
   try {

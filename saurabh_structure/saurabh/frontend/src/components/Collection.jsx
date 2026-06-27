@@ -4,7 +4,7 @@ import ProductCard from './ProductCard';
 import api from '../api/axios';
 
 const categories = [
-  { key: 'all', label: 'All Attars' },
+  { key: 'all', label: 'All Saurabh' },
   { key: 'floral', label: 'Floral' },
   { key: 'woody', label: 'Woody' },
   { key: 'spicy', label: 'Spicy' },
@@ -155,7 +155,7 @@ export default function Collection() {
               type="text"
               value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
-              placeholder="Search attars, notes, categories…"
+              placeholder="Search saurabh, notes, categories…"
               className="w-full pl-9 pr-9 py-2.5 rounded-full bg-surface-2 border border-border-subtle text-cream placeholder-cream-ghost font-body text-xs focus:outline-none focus:border-gold/40 transition-all duration-300"
             />
             {searchInput && (
@@ -210,7 +210,7 @@ export default function Collection() {
         {filtered.length === 0 && !loading && (
           <div className="text-center py-16">
             <p className="font-body text-cream-faint">
-              {search ? `No attars match "${search}". Try a different search.` : 'No attars found in this category.'}
+              {search ? `No saurabh match "${search}". Try a different search.` : 'No saurabh found in this category.'}
             </p>
             {search && (
               <button onClick={() => setSearchInput('')} className="mt-3 text-xs text-gold hover:underline">

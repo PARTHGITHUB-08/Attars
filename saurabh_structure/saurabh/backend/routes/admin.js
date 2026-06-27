@@ -34,7 +34,7 @@ async function getAdmin() {
   if (mongoose.connection.readyState !== 1) return getAdminCredentials();
   let admin = await AdminSettings.findOne();
   if (!admin) {
-    const defaultPassword = process.env.ADMIN_PASSWORD || 'Attars@2026!';
+    const defaultPassword = process.env.ADMIN_PASSWORD || 'Saurabh@2026!';
     const passwordHash = await bcrypt.hash(defaultPassword, 12);
     admin = await AdminSettings.create({ username: 'admin', passwordHash });
   }
@@ -56,7 +56,7 @@ router.post('/login', loginLimiter, async (req, res) => {
     if (!usernameMatch || !passwordMatch) return res.status(401).json({ success: false, message: 'Invalid credentials' });
 
     const token = generateToken(admin._id ? admin._id.toString() : 'admin');
-    res.cookie('attars_admin_token', token, COOKIE_OPTIONS).json({ success: true, message: 'Authenticated successfully' });
+    res.cookie('saurabh_admin_token', token, COOKIE_OPTIONS).json({ success: true, message: 'Authenticated successfully' });
   } catch (err) {
     console.error('[Admin Login]', err.message);
     res.status(500).json({ success: false, message: 'Server error during authentication' });
@@ -65,7 +65,7 @@ router.post('/login', loginLimiter, async (req, res) => {
 
 // ── POST /api/admin/logout ─────────────────────────────────────────────────
 router.post('/logout', (req, res) => {
-  res.clearCookie('attars_admin_token', { httpOnly: true, sameSite: 'strict' }).json({ success: true, message: 'Logged out' });
+  res.clearCookie('saurabh_admin_token', { httpOnly: true, sameSite: 'strict' }).json({ success: true, message: 'Logged out' });
 });
 
 // ── GET /api/admin/me ──────────────────────────────────────────────────────
@@ -100,7 +100,7 @@ router.put('/credentials', requireAuth, async (req, res) => {
       await admin.save();
     }
     const token = generateToken(req.adminId || 'admin');
-    res.cookie('attars_admin_token', token, COOKIE_OPTIONS).json({ success: true, message: 'Credentials updated successfully' });
+    res.cookie('saurabh_admin_token', token, COOKIE_OPTIONS).json({ success: true, message: 'Credentials updated successfully' });
   } catch (err) {
     console.error('[Update Credentials]', err.message);
     res.status(500).json({ success: false, message: 'Server error' });

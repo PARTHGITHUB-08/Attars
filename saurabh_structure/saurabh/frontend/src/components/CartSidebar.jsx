@@ -192,7 +192,7 @@ export default function CartSidebar() {
                           onClick={handleClose}
                           className="px-6 py-3 rounded-full bg-gold text-stone-950 text-xs font-semibold tracking-wider hover:bg-gold-light transition-all duration-300"
                         >
-                          Browse Attars
+                          Browse Saurabh
                         </button>
                       </div>
                     ) : (

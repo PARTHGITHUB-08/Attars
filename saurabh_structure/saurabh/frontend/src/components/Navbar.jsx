@@ -76,7 +76,7 @@ export default function Navbar() {
                 }
               }}
               className="hidden sm:flex w-9 h-9 items-center justify-center rounded-full border border-border-subtle hover:border-gold/30 hover:bg-gold-subtle transition-all duration-300"
-              aria-label="Search attars"
+              aria-label="Search saurabh"
             >
               <Search className="w-[15px] h-[15px] text-cream-muted" />
             </button>

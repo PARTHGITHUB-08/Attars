@@ -95,8 +95,8 @@ export default function Admin() {
     const handleUnauthorized = () => {
       setIsAuthenticated(false);
     };
-    window.addEventListener('attars:unauthorized', handleUnauthorized);
-    return () => window.removeEventListener('attars:unauthorized', handleUnauthorized);
+    window.addEventListener('saurabh:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('saurabh:unauthorized', handleUnauthorized);
   }, []);
 
   useEffect(() => {
@@ -275,17 +275,17 @@ export default function Admin() {
     if (type === 'subscribers') {
       const headers = ['ID', 'Email', 'Subscribed At', 'Active'];
       const mapFn = (row) => [row._id, row.email, row.subscribedAt, row.active];
-      downloadCSV('attars_subscribers.csv', headers, subscribers, mapFn);
+      downloadCSV('saurabh_subscribers.csv', headers, subscribers, mapFn);
       showToast('Subscribers list exported as CSV');
     } else if (type === 'products') {
       const headers = ['ID', 'Name', 'Subtitle', 'Price', 'Original Price', 'Category', 'Stock Count', 'In Stock', 'Rating', 'Origin'];
       const mapFn = (row) => [row._id, row.name, row.subtitle, row.price, row.originalPrice, row.category, row.stockCount, row.inStock, row.rating, row.origin];
-      downloadCSV('attars_products.csv', headers, products, mapFn);
+      downloadCSV('saurabh_products.csv', headers, products, mapFn);
       showToast('Products catalog exported as CSV');
     } else if (type === 'reviews') {
       const headers = ['ID', 'Name', 'Location', 'Rating', 'Product Name', 'Approved', 'Text'];
       const mapFn = (row) => [row._id, row.name, row.location, row.rating, row.productName, row.approved, row.text];
-      downloadCSV('attars_reviews.csv', headers, testimonials, mapFn);
+      downloadCSV('saurabh_reviews.csv', headers, testimonials, mapFn);
       showToast('Reviews records exported as CSV');
     }
   };
