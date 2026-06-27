@@ -27,7 +27,7 @@ export default function Preloader() {
             transition={{ repeat: Infinity, duration: 8, ease: "linear" }}
             className="absolute inset-[-4px] border border-dashed border-gold/15 rounded-full"
           />
-          <span className="font-display text-gold text-3xl font-semibold leading-none select-none">अ</span>
+          <span className="font-display text-gold text-3xl font-semibold leading-none select-none">स</span>
         </motion.div>
 
         {/* Fading brand name */}
@@ -38,7 +38,7 @@ export default function Preloader() {
           className="space-y-1.5"
         >
           <h1 className="font-display text-2xl font-semibold tracking-[0.25em] text-cream">
-            ATTRAZ
+            SAURABH
           </h1>
           <p className="text-[9px] tracking-[0.35em] uppercase text-gold font-body font-medium opacity-80">
             The Soul of Fragrance

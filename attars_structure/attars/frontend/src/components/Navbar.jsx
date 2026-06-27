@@ -41,11 +41,11 @@ export default function Navbar() {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 group">
             <div className="w-9 h-9 rounded-full border border-gold/30 flex items-center justify-center group-hover:border-gold/60 transition-colors duration-300 bg-gold-subtle">
-              <span className="font-display text-gold text-base font-semibold leading-none">अ</span>
+              <span className="font-display text-gold text-base font-semibold leading-none">स</span>
             </div>
             <div className="flex flex-col">
               <span className="font-display text-lg font-semibold text-cream tracking-wide leading-none">
-                ATTRAZ
+                SAURABH
               </span>
               <span className="text-[8px] tracking-[0.25em] uppercase text-gold/50 font-body leading-none mt-0.5">
                 The Soul of Fragrance

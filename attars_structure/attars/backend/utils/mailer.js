@@ -33,23 +33,23 @@ export const sendWelcomeEmail = async (subscriberEmail) => {
   const user = senderAddress();
   try {
     await transporter.sendMail({
-      from: `"Attraz Perfumes" <${user}>`,
+      from: `"Saurabh Perfumes" <${user}>`,
       to: subscriberEmail,
-      subject: 'Welcome to the Attraz Fragrance Family!',
+      subject: 'Welcome to the Saurabh Fragrance Family!',
       html: `
         <div style="font-family:'Georgia',serif;max-width:600px;margin:0 auto;padding:20px;border:1px solid #e5d5b7;background-color:#faf8f5;color:#2c2520;">
           <div style="text-align:center;border-bottom:2px solid #8b6914;padding-bottom:15px;margin-bottom:20px;">
-            <h1 style="color:#8b6914;font-size:24px;margin:0;letter-spacing:2px;">ATTRAZ PERFUMES</h1>
+            <h1 style="color:#8b6914;font-size:24px;margin:0;letter-spacing:2px;">SAURABH PERFUMES</h1>
             <p style="font-style:italic;font-size:11px;margin:5px 0 0;color:#6e5d53;letter-spacing:1px;">The Soul of Pure Fragrance</p>
           </div>
           <p>Dear Fragrance Lover,</p>
           <p>Welcome to our inner circle. We are thrilled to welcome you to the <strong>Fragrance Family</strong>.</p>
-          <p>At Attraz Perfumes, we preserve the traditional hydro-distillation techniques of Kannauj to craft the most premium, pure, and raw floral oils.</p>
+          <p>At Saurabh Perfumes, we preserve the traditional hydro-distillation techniques of Kannauj to craft the most premium, pure, and raw floral oils.</p>
           <p>As a gesture of our appreciation, here is your welcome gift: <strong>10% OFF</strong> your first order.</p>
           <div style="text-align:center;margin:30px 0;padding:15px;background-color:#8b6914;color:#ffffff;font-size:20px;font-weight:bold;border-radius:8px;letter-spacing:2px;">WELCOME10</div>
           <p style="font-size:12px;color:#6e5d53;text-align:center;">Simply mention this code when placing your order on WhatsApp.</p>
           <div style="border-top:1px solid #e5d5b7;padding-top:15px;margin-top:30px;font-size:11px;color:#8e7a6e;text-align:center;line-height:1.5;">
-            <p>&copy; 2026 Attraz Perfumes. Kannauj, Uttar Pradesh, India.</p>
+            <p>&copy; 2026 Saurabh Perfumes. Kannauj, Uttar Pradesh, India.</p>
           </div>
         </div>
       `,
@@ -68,9 +68,9 @@ export const sendAdminNotificationEmail = async (subscriberEmail) => {
   const user = senderAddress();
   try {
     await transporter.sendMail({
-      from: `"Attraz Perfumes Alert" <${user}>`,
+      from: `"Saurabh Perfumes Alert" <${user}>`,
       to: 'parthgelani08@gmail.com',
-      subject: 'New Fragrance Family Subscriber - Attraz Perfumes!',
+      subject: 'New Fragrance Family Subscriber - Saurabh Perfumes!',
       html: `
         <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;border:1px solid #ccc;background:#fff;color:#333;">
           <h2>New Newsletter Subscription</h2>
@@ -78,7 +78,7 @@ export const sendAdminNotificationEmail = async (subscriberEmail) => {
           <p>You have a new subscriber: <strong>${subscriberEmail}</strong></p>
           <p>Subscribed at: ${new Date().toLocaleString('en-IN')}</p>
           <hr style="border:0;border-top:1px solid #eee;margin:20px 0;" />
-          <p style="font-size:11px;color:#999;">Attraz Perfumes System Notification</p>
+          <p style="font-size:11px;color:#999;">Saurabh Perfumes System Notification</p>
         </div>
       `,
     });
@@ -126,13 +126,13 @@ export const sendInvoiceEmail = async (customerEmail, customerName, invoiceId, i
 
   try {
     await transporter.sendMail({
-      from: `"Attraz Perfumes" <${user}>`,
+      from: `"Saurabh Perfumes" <${user}>`,
       to: customerEmail,
-      subject: `Your Invoice ${invoiceId} — Attraz Perfumes`,
+      subject: `Your Invoice ${invoiceId} — Saurabh Perfumes`,
       html: `
         <div style="font-family:'Georgia',serif;max-width:600px;margin:0 auto;padding:20px;border:1px solid #e5d5b7;background-color:#faf8f5;color:#2c2520;">
           <div style="text-align:center;border-bottom:2px solid #8b6914;padding-bottom:15px;margin-bottom:20px;">
-            <h1 style="color:#8b6914;font-size:24px;margin:0;letter-spacing:2px;">ATTRAZ PERFUMES</h1>
+            <h1 style="color:#8b6914;font-size:24px;margin:0;letter-spacing:2px;">SAURABH PERFUMES</h1>
             <p style="font-style:italic;font-size:11px;margin:5px 0 0;color:#6e5d53;letter-spacing:1px;">The Soul of Pure Fragrance</p>
           </div>
           <h2 style="color:#2c2520;">Thank you for your order, ${customerName}!</h2>
@@ -155,7 +155,7 @@ export const sendInvoiceEmail = async (customerEmail, customerName, invoiceId, i
           ${paymentHtml}
           <p style="font-size:12px;color:#6e5d53;text-align:center;">Track your order at: <a href="https://yourdomain.com/track-order?id=${invoiceId}" style="color:#8b6914;">${invoiceId}</a></p>
           <div style="border-top:1px solid #e5d5b7;padding-top:15px;margin-top:30px;font-size:11px;color:#8e7a6e;text-align:center;">
-            <p>&copy; 2026 Attraz Perfumes. Kannauj, Uttar Pradesh, India.</p>
+            <p>&copy; 2026 Saurabh Perfumes. Kannauj, Uttar Pradesh, India.</p>
           </div>
         </div>
       `,
@@ -178,13 +178,13 @@ export const sendResetKeyEmail = async (email, key) => {
   const user = senderAddress();
   try {
     await transporter.sendMail({
-      from: `"Attraz Perfumes Security" <${user}>`,
+      from: `"Saurabh Perfumes Security" <${user}>`,
       to: email,
-      subject: '[Attraz Perfumes] Admin Password Reset Key',
+      subject: '[Saurabh Perfumes] Admin Password Reset Key',
       html: `
         <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;border:1px solid #e5d5b7;background-color:#faf8f5;color:#2c2520;">
           <h2 style="color:#8b6914;border-bottom:2px solid #8b6914;padding-bottom:10px;">Security Access Recovery</h2>
-          <p>A password reset was requested for Attraz Perfumes Admin.</p>
+          <p>A password reset was requested for Saurabh Perfumes Admin.</p>
           <p>Enter this 6-digit key in the admin panel (expires in 15 minutes):</p>
           <div style="text-align:center;margin:30px 0;padding:15px;background-color:#8b6914;color:#fff;font-size:32px;font-weight:bold;border-radius:8px;letter-spacing:8px;font-family:monospace;">${key}</div>
           <p style="font-size:11px;color:#8e7a6e;">If you did not request this, please secure your admin account immediately.</p>

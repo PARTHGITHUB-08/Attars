@@ -55,9 +55,9 @@ export default function TrackOrder() {
         <div className="max-w-4xl mx-auto px-5 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-full border border-gold/30 flex items-center justify-center bg-gold-subtle">
-              <span className="font-display text-gold text-sm font-semibold">अ</span>
+              <span className="font-display text-gold text-sm font-semibold">स</span>
             </div>
-            <span className="font-display text-sm font-semibold text-cream tracking-wide">ATTRAZ</span>
+            <span className="font-display text-sm font-semibold text-cream tracking-wide">SAURABH</span>
           </Link>
           <Link
             to="/"
@@ -239,7 +239,7 @@ export default function TrackOrder() {
             {/* Security Verification badge */}
             <div className="flex items-center justify-center gap-2 text-[10px] text-cream-ghost font-body pt-2 uppercase tracking-widest">
               <ShieldCheck className="w-4 h-4 text-gold/60" />
-              <span>Secured Authenticated by Attraz</span>
+              <span>Secured Authenticated by Saurabh</span>
             </div>
 
           </div>

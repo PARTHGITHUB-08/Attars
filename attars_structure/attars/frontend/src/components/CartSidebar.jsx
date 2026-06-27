@@ -69,7 +69,7 @@ export default function CartSidebar() {
     const orderId = `ORD-${Date.now().toString().slice(-6).toUpperCase()}`;
     const date = new Date().toLocaleDateString();
 
-    let message = `Hello Attraz Perfumes, I would like to place an order:\n`;
+    let message = `Hello Saurabh Perfumes, I would like to place an order:\n`;
     message += `*Order ID:* ${orderId}\n`;
     message += `*Date:* ${date}\n\n`;
     message += `*Customer Details:*\n`;

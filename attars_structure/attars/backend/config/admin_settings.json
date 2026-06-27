@@ -1,5 +1,4 @@
 {
   "username": "owner",
-  "password": "attar123",
-  "secretKey": "attars-admin-2026"
+  "passwordHash": "$2b$12$mu2A.c0reINNDMMQH8wZ/uE8U1OdG.qybaeUCvwfeJUr/Fe.Q/SLC"
 }

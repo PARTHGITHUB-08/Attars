@@ -589,9 +589,9 @@ export default function Admin() {
           <form onSubmit={handleLogin} className="w-full max-w-sm border border-border-subtle bg-surface-1/40 p-8 rounded-2xl shadow-2xl relative space-y-6">
             <div className="text-center pb-4 border-b border-border-subtle">
               <div className="w-12 h-12 rounded-full border border-gold/30 flex items-center justify-center bg-gold-subtle mx-auto mb-3">
-                <span className="font-display text-gold text-sm font-semibold">अ</span>
+                <span className="font-display text-gold text-sm font-semibold">स</span>
               </div>
-              <h2 className="font-display text-lg font-bold tracking-wider text-cream">ATTRAZ ADMIN PORTAL</h2>
+              <h2 className="font-display text-lg font-bold tracking-wider text-cream">SAURABH ADMIN PORTAL</h2>
               <p className="text-[10px] text-cream-ghost uppercase tracking-[0.2em] mt-1">Security Authenticator</p>
             </div>
 
@@ -760,9 +760,9 @@ export default function Admin() {
         <div className="max-w-7xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-full border border-gold/30 flex items-center justify-center bg-gold-subtle">
-              <span className="font-display text-gold text-sm font-semibold">अ</span>
+              <span className="font-display text-gold text-sm font-semibold">स</span>
             </div>
-            <span className="font-display text-base font-semibold text-cream tracking-wide">ATTRAZ ADMIN</span>
+            <span className="font-display text-base font-semibold text-cream tracking-wide">SAURABH ADMIN</span>
           </Link>
 
           <div className="flex items-center gap-4">
@@ -1570,10 +1570,10 @@ export default function Admin() {
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 border-b-2 border-stone-800 pb-6 mb-8">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full border-2 border-stone-800 flex items-center justify-center bg-stone-50">
-                      <span className="font-display text-stone-900 text-xl font-bold leading-none">अ</span>
+                      <span className="font-display text-stone-900 text-xl font-bold leading-none">स</span>
                     </div>
                     <div>
-                      <h1 className="font-display text-xl font-bold tracking-wider leading-none text-stone-900">ATTRAZ PERFUMES</h1>
+                      <h1 className="font-display text-xl font-bold tracking-wider leading-none text-stone-900">SAURABH PERFUMES</h1>
                       <span className="text-[9px] tracking-[0.25em] uppercase text-stone-500 font-semibold mt-1 block">The Soul of Pure Fragrance</span>
                     </div>
                   </div>
@@ -1677,7 +1677,7 @@ export default function Admin() {
                 <div className="mt-12 pt-8 border-t border-stone-200 flex justify-between items-end text-[10px] text-stone-400">
                   <div>
                     <div>Verification Status: <span className="text-green-600 font-bold">APPROVED ONLINE</span></div>
-                    <div>Digital Trace ID: {invoiceId}-ATTRAZ</div>
+                    <div>Digital Trace ID: {invoiceId}-SAURABH</div>
                   </div>
                   <div className="text-right">
                     <div className="w-32 border-b border-stone-300 pb-1 text-center font-display italic text-stone-600">Meet Gelani</div>
