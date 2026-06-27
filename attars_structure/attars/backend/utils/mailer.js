@@ -49,7 +49,7 @@ export const sendWelcomeEmail = async (subscriberEmail) => {
           <div style="text-align:center;margin:30px 0;padding:15px;background-color:#8b6914;color:#ffffff;font-size:20px;font-weight:bold;border-radius:8px;letter-spacing:2px;">WELCOME10</div>
           <p style="font-size:12px;color:#6e5d53;text-align:center;">Simply mention this code when placing your order on WhatsApp.</p>
           <div style="border-top:1px solid #e5d5b7;padding-top:15px;margin-top:30px;font-size:11px;color:#8e7a6e;text-align:center;line-height:1.5;">
-            <p>&copy; 2026 Saurabh Perfumes. Kannauj, Uttar Pradesh, India.</p>
+            <p>&copy; 2026 Saurabh Perfumes. Gujarat, India.</p>
           </div>
         </div>
       `,
@@ -155,7 +155,7 @@ export const sendInvoiceEmail = async (customerEmail, customerName, invoiceId, i
           ${paymentHtml}
           <p style="font-size:12px;color:#6e5d53;text-align:center;">Track your order at: <a href="https://yourdomain.com/track-order?id=${invoiceId}" style="color:#8b6914;">${invoiceId}</a></p>
           <div style="border-top:1px solid #e5d5b7;padding-top:15px;margin-top:30px;font-size:11px;color:#8e7a6e;text-align:center;">
-            <p>&copy; 2026 Saurabh Perfumes. Kannauj, Uttar Pradesh, India.</p>
+            <p>&copy; 2026 Saurabh Perfumes. Gujarat, India.</p>
           </div>
         </div>
       `,

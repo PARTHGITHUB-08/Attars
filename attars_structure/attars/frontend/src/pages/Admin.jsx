@@ -1455,7 +1455,7 @@ export default function Admin() {
                       type="text" 
                       value={invoiceCustomer.contact} 
                       onChange={e => setInvoiceCustomer({ ...invoiceCustomer, contact: e.target.value })} 
-                      placeholder="e.g. +91 98765 43210" 
+                      placeholder="e.g. +91 93133 19897" 
                       className="w-full bg-surface-2 border border-border-subtle rounded-xl p-2.5 text-xs text-cream focus:outline-none focus:border-gold/40"
                     />
                   </div>

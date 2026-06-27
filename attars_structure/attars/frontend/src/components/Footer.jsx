@@ -41,15 +41,11 @@ export default function Footer() {
             <div className="space-y-2 mb-5">
               <div className="flex items-center gap-2.5 text-[12px] text-cream-faint font-body">
                 <MapPin className="w-3.5 h-3.5 text-gold/40 flex-shrink-0" />
-                <span>Uttar Pradesh, India</span>
+                <span>Gujarat, India</span>
               </div>
               <div className="flex items-center gap-2.5 text-[12px] text-cream-faint font-body">
                 <Phone className="w-3.5 h-3.5 text-gold/40 flex-shrink-0" />
-                <span>+91 98765 43210</span>
-              </div>
-              <div className="flex items-center gap-2.5 text-[12px] text-cream-faint font-body">
-                <Mail className="w-3.5 h-3.5 text-gold/40 flex-shrink-0" />
-                <span>namaste@saurabh.in</span>
+                <span>+91 93133 19897</span>
               </div>
             </div>
 
@@ -123,12 +119,9 @@ export default function Footer() {
         <div className="gold-line mb-6" />
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-[11px] text-cream-ghost font-body text-center sm:text-left">
-            © 2025 Saurabh. All rights reserved. Crafted with श्रद्धा in India.
+            © 2026 Saurabh. All rights reserved. Crafted with श्रद्धा in India.
           </p>
           <div className="flex items-center gap-5">
-            <span className="text-[11px] text-cream-ghost font-body flex items-center gap-1.5">
-              🌍 We ship worldwide
-            </span>
             <span className="text-[11px] text-cream-ghost font-body flex items-center gap-1.5">
               <Lock className="w-3 h-3" /> Secure Payments
             </span>
