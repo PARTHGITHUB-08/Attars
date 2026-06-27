@@ -151,17 +151,35 @@ router.post('/reset-password', async (req, res, next) => {
 // ── GET /api/admin/dashboard ───────────────────────────────────────────────
 router.get('/dashboard', requireAuth, async (req, res, next) => {
   try {
+    const { range, startDate, endDate } = req.query;
+    
+    // Build date filter
+    let dateFilter = {};
+    const now = new Date();
+    
+    if (range === '7days') {
+      const d = new Date();
+      d.setDate(now.getDate() - 7);
+      dateFilter.createdAt = { $gte: d };
+    } else if (range === '30days') {
+      const d = new Date();
+      d.setDate(now.getDate() - 30);
+      dateFilter.createdAt = { $gte: d };
+    } else if (range === '6months') {
+      const d = new Date();
+      d.setMonth(now.getMonth() - 6);
+      dateFilter.createdAt = { $gte: d };
+    } else if (range === 'custom' && startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      dateFilter.createdAt = { $gte: start, $lte: end };
+    }
+
     if (mongoose.connection.readyState !== 1) {
       // Rich mock data for offline / dev mode
       const categories = [...new Set(mockProducts.map(p => p.category))];
       const catBreakdown = categories.map(c => ({ name: c, count: mockProducts.filter(p => p.category === c).length }));
-
-      const months = [];
-      for (let m = 5; m >= 0; m--) {
-        const d = new Date(); d.setMonth(d.getMonth() - m);
-        const label = d.toLocaleString('en-IN', { month: 'short', year: '2-digit' });
-        months.push({ month: label, revenue: Math.floor(Math.random() * 80000 + 20000), orders: Math.floor(Math.random() * 30 + 5) });
-      }
 
       return res.json({
         success: true,
@@ -169,15 +187,15 @@ router.get('/dashboard', requireAuth, async (req, res, next) => {
           products: { total: mockProducts.length, inStock: mockProducts.filter(p => p.inStock !== false).length, outOfStock: mockProducts.filter(p => p.inStock === false).length, featured: mockProducts.filter(p => p.featured).length },
           reviews: { total: 0, approved: 0, pending: 0 },
           subscribers: { total: 0, active: 0 },
-          invoices: { total: 18, totalRevenue: 284500, paid: 14, pending: 4, monthlyRevenue: months, recentInvoices: [] },
-          topProducts: mockProducts.slice(0, 5).map(p => ({ name: p.name, revenue: p.price * Math.floor(Math.random() * 15 + 3), orders: Math.floor(Math.random() * 15 + 3), rating: p.rating || 4.5 })),
+          invoices: { total: 0, totalRevenue: 0, paid: 0, pending: 0, monthlyRevenue: [], recentInvoices: [] },
+          topProducts: mockProducts.slice(0, 5).map(p => ({ name: p.name, revenue: 0, orders: 0, rating: p.rating || 4.5 })),
           categoryBreakdown: catBreakdown,
-          weeklyActivity: [12, 19, 8, 25, 17, 30, 22],
+          weeklyActivity: [0, 0, 0, 0, 0, 0, 0],
         }
       });
     }
 
-    const [totalProducts, inStockProducts, featuredProducts, totalReviews, approvedReviews, totalSubscribers, activeSubscribers, allInvoices] = await Promise.all([
+    const [totalProducts, inStockProducts, featuredProducts, totalReviews, approvedReviews, totalSubscribers, activeSubscribers, allInvoices, invoicesInPeriod] = await Promise.all([
       Product.countDocuments(),
       Product.countDocuments({ inStock: true }),
       Product.countDocuments({ featured: true }),
@@ -186,10 +204,12 @@ router.get('/dashboard', requireAuth, async (req, res, next) => {
       Subscriber.countDocuments(),
       Subscriber.countDocuments({ active: true }),
       Invoice.find().sort({ createdAt: -1 }).lean(),
+      Invoice.find(dateFilter).sort({ createdAt: -1 }).lean(),
     ]);
 
-    const paidInvoices = allInvoices.filter(i => i.paymentStatus === 'Paid');
+    const paidInvoices = invoicesInPeriod.filter(i => i.paymentStatus === 'Paid');
     const totalRevenue = paidInvoices.reduce((sum, i) => sum + (i.grandTotal || 0), 0);
+    const pendingCount = invoicesInPeriod.filter(i => i.paymentStatus === 'Pending').length;
 
     const monthlyRevenue = [];
     for (let m = 5; m >= 0; m--) {
@@ -198,12 +218,12 @@ router.get('/dashboard', requireAuth, async (req, res, next) => {
       const revenue = paidInvoices
         .filter(i => { const id = new Date(i.createdAt); return id.getMonth() === d.getMonth() && id.getFullYear() === d.getFullYear(); })
         .reduce((s, i) => s + (i.grandTotal || 0), 0);
-      const orders = allInvoices.filter(i => { const id = new Date(i.createdAt); return id.getMonth() === d.getMonth() && id.getFullYear() === d.getFullYear(); }).length;
+      const orders = invoicesInPeriod.filter(i => { const id = new Date(i.createdAt); return id.getMonth() === d.getMonth() && id.getFullYear() === d.getFullYear(); }).length;
       monthlyRevenue.push({ month: label, revenue, orders });
     }
 
     const productRevMap = {};
-    allInvoices.forEach(inv => (inv.items || []).forEach(item => {
+    invoicesInPeriod.forEach(inv => (inv.items || []).forEach(item => {
       if (!productRevMap[item.name]) productRevMap[item.name] = { name: item.name, revenue: 0, orders: 0 };
       productRevMap[item.name].revenue += (item.price || 0) * (item.qty || 1);
       productRevMap[item.name].orders += 1;
@@ -215,7 +235,7 @@ router.get('/dashboard', requireAuth, async (req, res, next) => {
 
     const weeklyActivity = Array.from({ length: 7 }, (_, i) => {
       const d = new Date(); d.setDate(d.getDate() - (6 - i));
-      return allInvoices.filter(inv => { const id = new Date(inv.createdAt); return id.toDateString() === d.toDateString(); }).length;
+      return invoicesInPeriod.filter(inv => { const id = new Date(inv.createdAt); return id.toDateString() === d.toDateString(); }).length;
     });
 
     res.json({
@@ -224,7 +244,7 @@ router.get('/dashboard', requireAuth, async (req, res, next) => {
         products: { total: totalProducts, inStock: inStockProducts, outOfStock: totalProducts - inStockProducts, featured: featuredProducts },
         reviews: { total: totalReviews, approved: approvedReviews, pending: totalReviews - approvedReviews },
         subscribers: { total: totalSubscribers, active: activeSubscribers },
-        invoices: { total: allInvoices.length, totalRevenue, paid: paidInvoices.length, pending: allInvoices.length - paidInvoices.length, monthlyRevenue, recentInvoices: allInvoices.slice(0, 5) },
+        invoices: { total: invoicesInPeriod.length, totalRevenue, paid: paidInvoices.length, pending: pendingCount, monthlyRevenue, recentInvoices: allInvoices.slice(0, 5) },
         topProducts,
         categoryBreakdown,
         weeklyActivity,

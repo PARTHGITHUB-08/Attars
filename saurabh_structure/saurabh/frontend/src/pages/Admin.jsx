@@ -42,6 +42,9 @@ export default function Admin() {
   // Dashboard Stats State
   const [dashStats, setDashStats] = useState(null);
   const [dashLoading, setDashLoading] = useState(false);
+  const [selectedRange, setSelectedRange] = useState('all');
+  const [customStart, setCustomStart] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
 
   // Billing States
   const [billingInvoices, setBillingInvoices] = useState([]);
@@ -251,10 +254,15 @@ export default function Admin() {
   };
 
   // Load dashboard stats
-  const loadDashboard = async () => {
+  const loadDashboard = async (range = 'all', start = '', end = '') => {
     setDashLoading(true);
     try {
-      const res = await api.get('/admin/dashboard');
+      const params = { range };
+      if (range === 'custom') {
+        params.startDate = start;
+        params.endDate = end;
+      }
+      const res = await api.get('/admin/dashboard', { params });
       if (res.success) setDashStats(res.data);
     } catch (err) {
       showToast('Error loading dashboard stats', 'error');
@@ -266,9 +274,9 @@ export default function Admin() {
   // Load dashboard when tab switches to it
   useEffect(() => {
     if (isAuthenticated && activeTab === 'dashboard') {
-      loadDashboard();
+      loadDashboard(selectedRange, customStart, customEnd);
     }
-  }, [activeTab, isAuthenticated]);
+  }, [isAuthenticated, activeTab, selectedRange]);
 
   // CSV Downloader
   const handleExportCSV = (type) => {
@@ -771,7 +779,7 @@ export default function Admin() {
 
           <div className="flex items-center gap-4">
             <button 
-              onClick={() => loadAllData()}
+              onClick={() => { loadAllData(); loadDashboard(selectedRange, customStart, customEnd); }}
               className="w-9 h-9 flex items-center justify-center rounded-full border border-border-subtle hover:bg-surface-2 transition-all duration-300"
               title="Refresh Records"
             >
@@ -880,6 +888,77 @@ export default function Admin() {
         {/* ─── DASHBOARD TAB ─────────────────────────────────────────── */}
         {activeTab === 'dashboard' && (
           <div className="space-y-8">
+            {/* Filter Section */}
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-border-subtle bg-surface-1/40 rounded-2xl p-4 sm:p-5 shadow-sm">
+                <div className="flex flex-col">
+                  <span className="text-[10px] uppercase tracking-[0.2em] text-gold font-body font-semibold">Analytics Scope</span>
+                  <h3 className="font-display text-sm font-semibold text-cream mt-0.5">Filter Revenue & Invoices</h3>
+                </div>
+                <div className="flex flex-wrap items-center gap-2.5">
+                  {[
+                    { key: 'all', label: 'All Time' },
+                    { key: '7days', label: 'Last 7 Days' },
+                    { key: '30days', label: 'Last 30 Days' },
+                    { key: '6months', label: 'Last 6 Months' },
+                    { key: 'custom', label: 'Custom Range' }
+                  ].map((r) => (
+                    <button
+                      key={r.key}
+                      onClick={() => {
+                        setSelectedRange(r.key);
+                        if (r.key !== 'custom') {
+                          loadDashboard(r.key);
+                        }
+                      }}
+                      className={`px-3.5 py-1.5 rounded-full text-[11px] font-body font-semibold uppercase tracking-wider transition-all duration-300 ${
+                        selectedRange === r.key
+                          ? 'bg-gold-gradient text-stone-950 shadow-sm hover:opacity-95'
+                          : 'border border-border-subtle text-cream-muted hover:border-gold/30 hover:bg-gold-subtle'
+                      }`}
+                    >
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {selectedRange === 'custom' && (
+                <div className="flex flex-col sm:flex-row sm:items-end gap-4 border border-border-subtle bg-surface-1/40 rounded-2xl p-5 shadow-sm animate-fade-in">
+                  <div className="flex-1">
+                    <label className="block text-[9px] uppercase font-bold text-cream-ghost mb-1">Start Date</label>
+                    <input
+                      type="date"
+                      value={customStart}
+                      onChange={(e) => setCustomStart(e.target.value)}
+                      className="w-full bg-surface-2 border border-border-subtle rounded-xl p-3 text-xs text-cream focus:outline-none focus:border-gold/40"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-[9px] uppercase font-bold text-cream-ghost mb-1">End Date</label>
+                    <input
+                      type="date"
+                      value={customEnd}
+                      onChange={(e) => setCustomEnd(e.target.value)}
+                      className="w-full bg-surface-2 border border-border-subtle rounded-xl p-3 text-xs text-cream focus:outline-none focus:border-gold/40"
+                    />
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (!customStart || !customEnd) {
+                        showToast('Please enter both start and end dates', 'error');
+                        return;
+                      }
+                      loadDashboard('custom', customStart, customEnd);
+                    }}
+                    className="px-6 py-3 rounded-xl bg-gold-gradient text-stone-950 font-body font-semibold text-xs tracking-wider uppercase hover:opacity-95 transition-all shadow-md"
+                  >
+                    Apply Filter
+                  </button>
+                </div>
+              )}
+            </div>
+
             {dashLoading ? (
               <div className="flex items-center justify-center py-24">
                 <div className="w-8 h-8 border-2 border-gold/30 border-t-gold rounded-full animate-spin" />
@@ -889,18 +968,58 @@ export default function Admin() {
                 {/* KPI Cards Row */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                   {[
-                    { label: 'Total Revenue', value: `₹${(dashStats.invoices.totalRevenue || 0).toLocaleString('en-IN')}`, sub: `${dashStats.invoices.paid} paid invoices`, icon: DollarSign, bg: 'bg-[#1C1A17] border-gold/15 shadow-xl shadow-black/10' },
-                    { label: 'Total Products', value: dashStats.products.total, sub: `${dashStats.products.outOfStock} out of stock`, icon: Package, bg: 'bg-[#1C1A17] border-gold/15 shadow-xl shadow-black/10' },
-                    { label: 'Subscribers', value: dashStats.subscribers.active, sub: `${dashStats.subscribers.total} total signups`, icon: Users, bg: 'bg-[#1C1A17] border-gold/15 shadow-xl shadow-black/10' },
-                    { label: 'Pending Reviews', value: dashStats.reviews.pending, sub: `${dashStats.reviews.approved} approved`, icon: Star, bg: 'bg-[#1C1A17] border-gold/15 shadow-xl shadow-black/10' },
+                    { 
+                      label: 'Total Revenue', 
+                      value: `₹${(dashStats.invoices.totalRevenue || 0).toLocaleString('en-IN')}`, 
+                      sub: `${dashStats.invoices.paid} paid invoices`, 
+                      icon: DollarSign, 
+                      bg: 'bg-gold/8 border-gold/25 text-gold-dark shadow-md shadow-gold/5',
+                      iconColor: 'text-gold',
+                      labelColor: 'text-gold-dark/60',
+                      subColor: 'text-gold-dark/80',
+                      valColor: 'text-gold-dark'
+                    },
+                    { 
+                      label: 'Total Products', 
+                      value: dashStats.products.total, 
+                      sub: `${dashStats.products.outOfStock} out of stock`, 
+                      icon: Package, 
+                      bg: 'bg-blue-500/8 border-blue-500/25 text-blue-900 shadow-md shadow-blue-500/5',
+                      iconColor: 'text-blue-500',
+                      labelColor: 'text-blue-900/60',
+                      subColor: 'text-blue-900/80',
+                      valColor: 'text-blue-900'
+                    },
+                    { 
+                      label: 'Subscribers', 
+                      value: dashStats.subscribers.active, 
+                      sub: `${dashStats.subscribers.total} total signups`, 
+                      icon: Users, 
+                      bg: 'bg-purple-500/8 border-purple-500/25 text-purple-900 shadow-md shadow-purple-500/5',
+                      iconColor: 'text-purple-500',
+                      labelColor: 'text-purple-900/60',
+                      subColor: 'text-purple-900/80',
+                      valColor: 'text-purple-900'
+                    },
+                    { 
+                      label: 'Pending Reviews', 
+                      value: dashStats.reviews.pending, 
+                      sub: `${dashStats.reviews.approved} approved`, 
+                      icon: Star, 
+                      bg: 'bg-amber-500/8 border-amber-500/25 text-amber-900 shadow-md shadow-amber-500/5',
+                      iconColor: 'text-amber-500',
+                      labelColor: 'text-amber-900/60',
+                      subColor: 'text-amber-900/80',
+                      valColor: 'text-amber-900'
+                    },
                   ].map((kpi, i) => (
                     <div key={i} className={`border rounded-2xl p-5 flex flex-col gap-3 transition-all duration-300 hover:scale-[1.02] ${kpi.bg}`}>
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] uppercase tracking-widest font-bold text-gold/60 font-body">{kpi.label}</span>
-                        <kpi.icon className="w-4 h-4 text-gold-light" />
+                        <span className={`text-[10px] uppercase tracking-widest font-bold font-body ${kpi.labelColor}`}>{kpi.label}</span>
+                        <kpi.icon className={`w-4 h-4 ${kpi.iconColor}`} />
                       </div>
-                      <div className="text-3xl font-display font-bold text-gold-light">{kpi.value}</div>
-                      <div className="text-[10px] text-cream-ghost/85 font-body">{kpi.sub}</div>
+                      <div className={`text-3xl font-display font-bold ${kpi.valColor}`}>{kpi.value}</div>
+                      <div className={`text-[10px] font-body ${kpi.subColor}`}>{kpi.sub}</div>
                     </div>
                   ))}
                 </div>
