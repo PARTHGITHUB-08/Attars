@@ -31,7 +31,7 @@ This version replaces the previous `Ctrl+A` backdoor with a proper JWT authentic
 ### 1. Backend
 
 ```bash
-cd saurabh_structure/saurabh/backend
+cd backend
 npm install
 cp .env.example .env        # fill in your values
 npm run dev
@@ -44,7 +44,7 @@ Default admin credentials (first run, if no DB record exists):
 ### 2. Frontend
 
 ```bash
-cd saurabh_structure/saurabh/frontend
+cd frontend
 npm install
 npm run dev
 ```
