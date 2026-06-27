@@ -797,7 +797,7 @@ export default function Admin() {
 
       <main className="max-w-7xl mx-auto px-5 sm:px-8 pt-8">
         {/* Dashboard Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
           <div className="border border-border-subtle bg-surface-1/50 rounded-2xl p-6 flex items-center gap-5">
             <div className="w-12 h-12 rounded-xl bg-gold-subtle border border-gold/15 flex items-center justify-center">
               <Package className="w-5 h-5 text-gold" />
@@ -818,15 +818,6 @@ export default function Admin() {
           </div>
           <div className="border border-border-subtle bg-surface-1/50 rounded-2xl p-6 flex items-center gap-5">
             <div className="w-12 h-12 rounded-xl bg-gold-subtle border border-gold/15 flex items-center justify-center">
-              <Mail className="w-5 h-5 text-gold" />
-            </div>
-            <div>
-              <div className="text-2xl font-display font-bold">{subscribers.length}</div>
-              <div className="text-xs text-cream-ghost tracking-wide uppercase font-body mt-0.5">Newsletter Subscriptions</div>
-            </div>
-          </div>
-          <div className="border border-border-subtle bg-surface-1/50 rounded-2xl p-6 flex items-center gap-5">
-            <div className="w-12 h-12 rounded-xl bg-gold-subtle border border-gold/15 flex items-center justify-center">
               <FileText className="w-5 h-5 text-gold" />
             </div>
             <div>
@@ -843,7 +834,6 @@ export default function Admin() {
               { id: 'dashboard', label: 'Dashboard', icon: BarChart2 },
               { id: 'products', label: 'Products', icon: Package },
               { id: 'testimonials', label: 'Reviews', icon: MessageSquare },
-              { id: 'subscribers', label: 'Subscribers', icon: Mail },
               { id: 'billing', label: 'Invoice Generator', icon: FileText },
               { id: 'security', label: 'Security Settings', icon: Shield }
             ].map(tab => (
@@ -966,7 +956,7 @@ export default function Admin() {
             ) : dashStats ? (
               <>
                 {/* KPI Cards Row */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {[
                     { 
                       label: 'Total Revenue', 
@@ -989,17 +979,6 @@ export default function Admin() {
                       labelColor: 'text-blue-900/60',
                       subColor: 'text-blue-900/80',
                       valColor: 'text-blue-900'
-                    },
-                    { 
-                      label: 'Subscribers', 
-                      value: dashStats.subscribers.active, 
-                      sub: `${dashStats.subscribers.total} total signups`, 
-                      icon: Users, 
-                      bg: 'bg-purple-500/8 border-purple-500/25 text-purple-900 shadow-md shadow-purple-500/5',
-                      iconColor: 'text-purple-500',
-                      labelColor: 'text-purple-900/60',
-                      subColor: 'text-purple-900/80',
-                      valColor: 'text-purple-900'
                     },
                     { 
                       label: 'Pending Reviews', 
@@ -1518,40 +1497,7 @@ export default function Admin() {
           </div>
         )}
 
-        {/* Newsletter Subscribers lists panel */}
-        {!loading && activeTab === 'subscribers' && (
-          <div className="border border-border-subtle bg-surface-1/30 rounded-2xl overflow-hidden shadow-xl max-w-3xl mx-auto">
-            <table className="w-full text-left border-collapse text-sm">
-              <thead>
-                <tr className="bg-surface-2/80 text-cream-ghost border-b border-border-subtle font-body text-xs uppercase tracking-wider">
-                  <th className="p-4 sm:p-5">Subscriber Email</th>
-                  <th className="p-4 sm:p-5">Subscription Date</th>
-                  <th className="p-4 sm:p-5 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border-subtle font-body">
-                {subscribers.map(s => (
-                  <tr key={s._id} className="hover:bg-surface-2/30 transition-colors">
-                    <td className="p-4 sm:p-5 font-semibold text-cream-muted">{s.email}</td>
-                    <td className="p-4 sm:p-5 text-xs text-cream-ghost">{new Date(s.subscribedAt).toLocaleDateString()}</td>
-                    <td className="p-4 sm:p-5 text-right">
-                      <button 
-                        onClick={() => handleDeleteSubscriber(s._id)} 
-                        className="p-2 rounded-full border border-border-default hover:border-red-900/40 hover:bg-red-950/20 text-cream-muted hover:text-red-400 transition-all" 
-                        title="Remove Subscriber"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {subscribers.length === 0 && (
-              <div className="text-center py-20 text-cream-ghost">No email subscribers found.</div>
-            )}
-          </div>
-        )}
+
 
         {/* Invoice / Billing Workspace */}
         {!loading && activeTab === 'billing' && (

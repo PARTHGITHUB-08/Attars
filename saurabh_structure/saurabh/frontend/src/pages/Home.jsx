@@ -7,7 +7,6 @@ import Legacy from '../components/Legacy';
 import Process from '../components/Process';
 import Collection from '../components/Collection';
 import Testimonials from '../components/Testimonials';
-import Newsletter from '../components/Newsletter';
 import Footer from '../components/Footer';
 import BackToTop from '../components/BackToTop';
 import Preloader from '../components/Preloader';
@@ -40,7 +39,6 @@ export default function Home() {
           <Process />
           <Collection />
           <Testimonials />
-          <Newsletter />
           <Footer />
           <BackToTop />
         </motion.div>
