@@ -53,11 +53,12 @@ export default function TrackOrder() {
       {/* Header Bar */}
       <header className="border-b border-border-subtle bg-surface-1/30 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-5 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full border border-gold/30 flex items-center justify-center bg-gold-subtle">
-              <span className="font-display text-gold text-sm font-semibold">स</span>
-            </div>
-            <span className="font-display text-sm font-semibold text-cream tracking-wide">SAURABH</span>
+          <Link to="/" className="flex items-center group">
+            <img 
+              src="/logo_full.png" 
+              alt="Saurabh — The Soul of Pure Fragrance" 
+              className="h-9 w-auto object-contain transition-transform duration-300 group-hover:scale-[1.02]"
+            />
           </Link>
           <Link
             to="/"

@@ -1687,14 +1687,16 @@ export default function Admin() {
                 className="border border-border-default bg-surface-0 p-8 sm:p-12 rounded-2xl shadow-2xl text-stone-900 font-body relative overflow-hidden"
               >
                 {/* Vintage Watermark Accent */}
-                <div className="absolute -top-10 -right-10 w-44 h-44 rounded-full border border-stone-200/50 flex items-center justify-center text-[100px] text-stone-100 font-display select-none pointer-events-none">अ</div>
+                <div className="absolute -top-10 -right-10 w-44 h-44 rounded-full border border-stone-200/50 flex items-center justify-center text-[100px] text-stone-100 font-display select-none pointer-events-none">स</div>
 
                 {/* Logo & Store Header */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 border-b-2 border-stone-800 pb-6 mb-8">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full border-2 border-stone-800 flex items-center justify-center bg-stone-50">
-                      <span className="font-display text-stone-900 text-xl font-bold leading-none">स</span>
-                    </div>
+                    <img 
+                      src="/logo_icon.png" 
+                      alt="Saurabh Logo" 
+                      className="w-12 h-12 object-contain"
+                    />
                     <div>
                       <h1 className="font-display text-xl font-bold tracking-wider leading-none text-stone-900">SAURABH PERFUMES</h1>
                       <span className="text-[9px] tracking-[0.25em] uppercase text-stone-500 font-semibold mt-1 block">The Soul of Pure Fragrance</span>
