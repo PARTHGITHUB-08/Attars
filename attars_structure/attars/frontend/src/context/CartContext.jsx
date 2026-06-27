@@ -1,10 +1,30 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
 const CartContext = createContext();
 
+const CART_KEY = 'attars_cart';
+
+function loadCart() {
+  try {
+    const stored = localStorage.getItem(CART_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
+
 export function CartProvider({ children }) {
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState(loadCart);
   const [cartOpen, setCartOpen] = useState(false);
+
+  // Persist cart to localStorage on every change
+  useEffect(() => {
+    try {
+      localStorage.setItem(CART_KEY, JSON.stringify(items));
+    } catch {
+      // storage quota exceeded - ignore
+    }
+  }, [items]);
 
   const addItem = useCallback((product) => {
     setItems(prev => {
@@ -28,6 +48,7 @@ export function CartProvider({ children }) {
 
   const clearCart = useCallback(() => {
     setItems([]);
+    localStorage.removeItem(CART_KEY);
   }, []);
 
   const count = items.reduce((sum, i) => sum + i.qty, 0);

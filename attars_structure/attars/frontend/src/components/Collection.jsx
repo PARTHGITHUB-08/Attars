@@ -101,6 +101,8 @@ export default function Collection() {
   const [products, setProducts] = useState(fallbackProducts);
   const [activeCategory, setActiveCategory] = useState('all');
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
 
   useEffect(() => {
     api.get('/products')
@@ -111,10 +113,22 @@ export default function Collection() {
       .finally(() => setLoading(false));
   }, []);
 
-  const filtered = (activeCategory === 'all'
-    ? products
-    : products.filter(p => p.category === activeCategory)
-  ).filter(p => p.image && p.image.trim() !== "");
+  // Debounce search — 300ms
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(searchInput.trim().toLowerCase()), 300);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
+  const filtered = products
+    .filter(p => p.image && p.image.trim() !== '')
+    .filter(p => activeCategory === 'all' || p.category === activeCategory)
+    .filter(p => !search ||
+      p.name?.toLowerCase().includes(search) ||
+      p.subtitle?.toLowerCase().includes(search) ||
+      p.category?.toLowerCase().includes(search) ||
+      p.notes?.top?.some(n => n.toLowerCase().includes(search)) ||
+      p.notes?.base?.some(n => n.toLowerCase().includes(search))
+    );
 
   return (
     <section id="collection" className="relative py-20 sm:py-28 md:py-36">
@@ -131,6 +145,25 @@ export default function Collection() {
             Each attar tells a story — of Mughal gardens, temple offerings,
             and monsoon evenings in the heart of India.
           </p>
+        </ScrollReveal>
+
+        {/* Search bar */}
+        <ScrollReveal delay={80} className="flex justify-center mb-6">
+          <div className="relative w-full max-w-sm">
+            <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-cream-ghost pointer-events-none" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input
+              type="text"
+              value={searchInput}
+              onChange={e => setSearchInput(e.target.value)}
+              placeholder="Search attars, notes, categories…"
+              className="w-full pl-9 pr-9 py-2.5 rounded-full bg-surface-2 border border-border-subtle text-cream placeholder-cream-ghost font-body text-xs focus:outline-none focus:border-gold/40 transition-all duration-300"
+            />
+            {searchInput && (
+              <button onClick={() => setSearchInput('')} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-cream-ghost hover:text-cream transition-colors">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </button>
+            )}
+          </div>
         </ScrollReveal>
 
         {/* Filter tabs */}
@@ -151,17 +184,39 @@ export default function Collection() {
         </ScrollReveal>
 
         {/* Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-          {filtered.map((product, i) => (
-            <ScrollReveal key={product._id} delay={i * 80}>
-              <ProductCard product={product} />
-            </ScrollReveal>
-          ))}
-        </div>
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="rounded-2xl border border-border-subtle bg-surface-1 overflow-hidden animate-pulse">
+                <div className="aspect-[3/4] bg-surface-2" />
+                <div className="p-5 space-y-3">
+                  <div className="h-3 bg-surface-2 rounded w-2/3" />
+                  <div className="h-4 bg-surface-2 rounded w-full" />
+                  <div className="h-3 bg-surface-2 rounded w-3/4" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+            {filtered.map((product, i) => (
+              <ScrollReveal key={product._id} delay={i * 80}>
+                <ProductCard product={product} />
+              </ScrollReveal>
+            ))}
+          </div>
+        )}
 
         {filtered.length === 0 && !loading && (
           <div className="text-center py-16">
-            <p className="font-body text-cream-faint">No attars found in this category.</p>
+            <p className="font-body text-cream-faint">
+              {search ? `No attars match "${search}". Try a different search.` : 'No attars found in this category.'}
+            </p>
+            {search && (
+              <button onClick={() => setSearchInput('')} className="mt-3 text-xs text-gold hover:underline">
+                Clear search
+              </button>
+            )}
           </div>
         )}
       </div>

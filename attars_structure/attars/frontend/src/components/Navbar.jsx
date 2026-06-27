@@ -2,14 +2,12 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, ShoppingBag, Menu, X } from 'lucide-react';
 import { useCart } from '../context/CartContext';
-import { useToast } from '../context/ToastContext';
 import MobileMenu from './MobileMenu';
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { count, setCartOpen } = useCart();
-  const { showToast } = useToast();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
@@ -73,9 +71,18 @@ export default function Navbar() {
           {/* Actions */}
           <div className="flex items-center gap-2">
             <button
-              onClick={() => showToast('Search coming soon')}
+              onClick={() => {
+                const el = document.querySelector('#collection');
+                if (el) {
+                  el.scrollIntoView({ behavior: 'smooth' });
+                  setTimeout(() => {
+                    const input = el.querySelector('input[type="text"]');
+                    if (input) input.focus();
+                  }, 600);
+                }
+              }}
               className="hidden sm:flex w-9 h-9 items-center justify-center rounded-full border border-border-subtle hover:border-gold/30 hover:bg-gold-subtle transition-all duration-300"
-              aria-label="Search"
+              aria-label="Search attars"
             >
               <Search className="w-[15px] h-[15px] text-cream-muted" />
             </button>

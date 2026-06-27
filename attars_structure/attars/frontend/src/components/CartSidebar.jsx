@@ -12,6 +12,7 @@ export default function CartSidebar() {
   const [customer, setCustomer] = useState({ name: '', phone: '', email: '', address: '' });
   const [placedOrder, setPlacedOrder] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('UPI'); // 'UPI' or 'Cash'
+  const [submitting, setSubmitting] = useState(false);
 
   if (!cartOpen) return null;
 
@@ -61,6 +62,8 @@ export default function CartSidebar() {
   const handleCheckoutSubmit = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
     if (!customer.name || !customer.phone || !customer.address) return;
+    if (submitting) return;
+    setSubmitting(true);
     
     const phoneNumber = '919313319897';
     const orderId = `ORD-${Date.now().toString().slice(-6).toUpperCase()}`;
@@ -110,15 +113,14 @@ export default function CartSidebar() {
       paymentStatus: 'Pending'
     };
     
-    // Save invoice to backend database
-    try {
-      await api.post('/invoices', orderDetails);
-    } catch (err) {
-      console.error('[API Error] Failed to store checkout invoice on backend:', err);
-    }
+    // Save invoice to backend (non-blocking — order proceeds regardless)
+    api.post('/invoices', orderDetails).catch(err => {
+      console.error('[API Error] Failed to store checkout invoice on backend:', err.message);
+    });
 
     setPlacedOrder({ ...orderDetails, whatsappUrl, total, paymentMethod });
     setCheckoutStep('success');
+    setSubmitting(false);
     clearCart();
 
     // Attempt to redirect to WhatsApp
@@ -444,7 +446,7 @@ export default function CartSidebar() {
                       <div className="flex justify-between border-b border-border-subtle pb-2">
                         <div>
                           <span className="font-semibold text-cream">Invoice No:</span>
-                          <span className="text-cream-muted ml-1">{placedOrder.orderId}</span>
+                          <span className="text-cream-muted ml-1">{placedOrder.invoiceId}</span>
                         </div>
                         <span className="text-cream-ghost">{placedOrder.date}</span>
                       </div>
@@ -568,9 +570,12 @@ export default function CartSidebar() {
                   </button>
                   <button
                     onClick={handleCheckoutSubmit}
-                    className="flex-2 bg-gold-gradient hover:bg-gold-gradient-hover text-stone-950 px-8 py-3 rounded-full text-xs font-bold tracking-wider transition-all duration-300 shadow-md shadow-gold/15"
+                    disabled={submitting}
+                    className="flex-2 bg-gold-gradient hover:bg-gold-gradient-hover text-stone-950 px-8 py-3 rounded-full text-xs font-bold tracking-wider transition-all duration-300 shadow-md shadow-gold/15 disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
                   >
-                    Confirm & Place Order
+                    {submitting ? (
+                      <><div className="w-3.5 h-3.5 border-2 border-stone-800/30 border-t-stone-800 rounded-full animate-spin" />Placing...</>
+                    ) : 'Confirm & Place Order'}
                   </button>
                 </div>
               )}
